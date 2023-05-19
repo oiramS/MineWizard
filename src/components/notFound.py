@@ -7,7 +7,7 @@ def render(app: Dash) -> html.Div:
     '''
     return html.Div(
         children=html.Div([
-            html.H1('Análisis Exploratorio de Datos'),
+            html.H1('Eror 404: Página no encontrada. :sadge:'),
             html.Div('''
 
                 This is an example of a simple Dash app with

@@ -1,7 +1,7 @@
 from dash import Dash, html, dcc
 
 
-from . import navbar, overiew
+from . import navbar, content
 
 
 def create_layout(app: Dash) -> html.Div:
@@ -10,5 +10,5 @@ def create_layout(app: Dash) -> html.Div:
     '''
     return html.Div([dcc.Location(id = "url"),
     navbar.render(app),
-    overiew.render(app)
+    content.render(app)
 ])

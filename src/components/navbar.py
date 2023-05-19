@@ -8,13 +8,13 @@ def render(app: Dash) -> html.Div:
     '''
     return dbc.NavbarSimple(
     children=[
-        dbc.NavItem(dbc.NavLink("EDA", href="#"), className="example"),
-        dbc.NavItem(dbc.NavLink("PCA", href="#")),        
+        dbc.NavItem(dbc.NavLink("INICIO", href="/")),
+        dbc.NavItem(dbc.NavLink("EDA", href="/eda")),
+        dbc.NavItem(dbc.NavLink("PCA", href="/pca")),        
         dbc.DropdownMenu(
             children=[
-                dbc.DropdownMenuItem("Clasificación", header=True),
-                dbc.DropdownMenuItem("Árbol", href="#"),
-                dbc.DropdownMenuItem("Bosque", href="#"),
+                dbc.DropdownMenuItem("Árbol", href="/c_tree"),
+                dbc.DropdownMenuItem("Bosque", href="/c_forest"),
             ],
             nav=True,
             in_navbar=True,
@@ -22,9 +22,8 @@ def render(app: Dash) -> html.Div:
         ),
         dbc.DropdownMenu(
             children=[
-                dbc.DropdownMenuItem("Pronóstico", header=True),
-                dbc.DropdownMenuItem("Árbol", href="#"),
-                dbc.DropdownMenuItem("Bosque", href="#"),
+                dbc.DropdownMenuItem("Árbol", href="/p_tree"),
+                dbc.DropdownMenuItem("Bosque", href="/p_forest"),
             ],
             nav=True,
             in_navbar=True,
@@ -32,7 +31,7 @@ def render(app: Dash) -> html.Div:
         ),
     ],
     brand="MineWizard",
-    brand_href="#",
+    brand_href="/",
     color="primary",
     dark=True,
 )
