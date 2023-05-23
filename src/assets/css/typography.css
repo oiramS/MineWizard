@@ -10,3 +10,10 @@ h6 {
   padding: 25px;
   color: rgb(6, 1, 20);
 }
+#contenido{
+  padding: 20px;
+  background-color: rgb(37, 39, 39);
+  color: aliceblue;
+  text-align: justify;
+}
+
