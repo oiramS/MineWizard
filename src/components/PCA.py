@@ -159,9 +159,9 @@ def parse_contents(contents, filename, date):
                     color="primary",
                     style={"font-size":"15px"}
                 ),
-                html.P("🟥 Correlación fuerte: De -1.0 a -0.67 y 0.67 a 1.0", className="ms-4"),
-                html.P("⬜ Correlación moderada: De -0.66 a -0.34 y 0.34 a 0.66", className="ms-4"),
-                html.P("🟦 Correlación débil: De -0.33 a 0.0 y 0.0 a 0.33", className="ms-4"),
+                html.P("🟥 Correlación positiva fuerte: De -1.0 a -0.67 y 0.67 a 1.0", className="ms-4"),
+                html.P("⬜ Correlación débil: De -0.66 a -0.34 y 0.34 a 0.66", className="ms-4"),
+                html.P("🟦 Correlación negativa fuerte: De -0.33 a 0.0 y 0.0 a 0.33", className="ms-4"),
                 dbc.Alert("⚠️ Si no se identifica almenos una correlación fuerte, entonces PCA no aplica.", color="warning"),
             ],
             className="mt-3"
