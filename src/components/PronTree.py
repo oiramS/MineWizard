@@ -1,7 +1,6 @@
 from dash import Dash, html
 from dash import dcc, html, Input, Output, State, callback# Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
 import pandas as pd
-
 import dash_bootstrap_components as dbc
 import io
 from io import BytesIO
@@ -15,13 +14,14 @@ def render(app: Dash) -> html.Div:
     '''
     return html.Div(
         children=html.Div([
-            html.H1('Árbol de pronóstico'),
+            html.H1(' Árbol de pronóstico'),
             #Explicación de Árboles de pronóstico
             html.Div(
             id="contenido",
             children=[
                 html.P("Árbol de decisión, es una prueba estadística de predicción cuya función objetivo es la de interpretar resultados a partir de observaciones y construcciones lógicas (Barrientos, Cruz y Acosta, 2009)."),
-            ],         
+            
+                ],         
             ),
             html.Div(
                 id="upload-data",
