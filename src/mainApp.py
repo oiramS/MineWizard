@@ -9,7 +9,10 @@ def main() -> None:
     '''
     entry point function
     '''
-    app = Dash(external_stylesheets=[dbc.themes.LUX])
+    app = Dash(
+        external_stylesheets=[dbc.themes.LUX],
+        suppress_callback_exceptions=True
+        )
     app.title = "MineWizard"
     app.layout = create_layout(app)
     app.run(
