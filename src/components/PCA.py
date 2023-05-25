@@ -108,7 +108,7 @@ def parse_contents(contents, filename, date):
             id='matriz',
             figure={
                 'data': [
-                    {'x': df.corr().columns, 'y': df.corr().columns, 'z': np.triu(df.corr().values, k=1), 'type': 'heatmap', 'colorscale': 'RdBu', 'symmetric': False}
+                    {'x': df.corr(numeric_only=True).columns, 'y': df.corr().columns, 'z': np.triu(df.corr().values, k=1), 'type': 'heatmap', 'colorscale': 'sepal_length', 'color_continuous_scale':'scale' , 'symmetric': False}
                 ],
                 'layout': {
                     'title': 'Matriz de correlación',
@@ -153,7 +153,7 @@ def parse_contents(contents, filename, date):
         html.Div(
 
             children=[
-                    dbc.Badge("ℹ️ Método de  Estandarización", color="primary",
+                    dbc.Badge("ℹMétodo de  Estandarización", color="primary",
                     id="tooltip-method", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"},
                     ),
                     dbc.Tooltip(
@@ -179,7 +179,7 @@ def parse_contents(contents, filename, date):
         html.Div(id='estandar'),
         html.Div(
             children=[
-            dbc.Badge("ℹ️ Cantidad de Componentes principales", color="primary",
+            dbc.Badge("Cantidad de Componentes principales", color="primary",
                 id="tooltip-numpc", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
             ),
             dbc.Tooltip(
@@ -197,7 +197,9 @@ def parse_contents(contents, filename, date):
             ),
 
 
-            ]
+            ],
+            style={"font-size":"20px"},
+            className="mt-4",
         ),
         html.Div(id='numComp'),
         html.Div(id='variance'),
