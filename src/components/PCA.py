@@ -12,6 +12,8 @@ from dash.dash_table.Format import Group
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler 
 
+
+
 def render(app: Dash) -> html.Div:
     '''
     overview
@@ -68,14 +70,11 @@ def render(app: Dash) -> html.Div:
 )
 def estandarizacion(value,df):
     if value == 'StandardScaler':
-        Estandarizar=StandardScaler()
+        Estandarizar=StandardScaler().fit_transform(df)
     elif value == 'MinMaxScaler':
-        Estandarizar=MinMaxScaler()
-    else:
-        print(value)
-    return Estandarizar
-def pricoman(Estandarizar,Corr):
-    NuevaMatriz=Corr
+        Estandarizar=MinMaxScaler().fit_transform(df)
+    return pd.DataFrame(Estandarizar,columns=df.columns)
+def pricoman(Estandarizar):
     MEstandarizada=Estandarizar.fit_transform(NuevaMatriz)
     pd.DataFrame(MEstandarizada,columns=NuevaMatriz.columns)
     principal=PCA(n_components=None)
@@ -88,7 +87,7 @@ def pricoman(Estandarizar,Corr):
     )
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
-
+    global df
     decoded = base64.b64decode(content_string)
     try:
         if 'csv' in filename:
@@ -107,19 +106,10 @@ def parse_contents(contents, filename, date):
     return html.Div([
         dbc.Alert('El archivo cargado es: {}'.format(filename), color="success"),
         # Se muestran las primeras 8 filas del dataframe
-        dash_table.DataTable(
-            data=df.to_dict('records'),
-            page_size=8,
-            sort_action='native',
-            sort_mode='multi',
-            column_selectable='single',
-            row_deletable=False,
-            cell_selectable=True,
-            editable=False,
-            row_selectable='multi',
-            columns=[{'name': i, 'id': i, "deletable":False} for i in df.columns],
-            style_table={'height': '300px', 'overflowX': 'auto'},
+        html.Div(
+            create_data_table(df),
         ),
+        
         dbc.Alert('Variables numéricas: {}'.format(df.select_dtypes(include='number').shape[1]), color="info", class_name="my-3 mx-auto text-center w-25"),
 
         html.H3(
@@ -170,114 +160,55 @@ def parse_contents(contents, filename, date):
             "Cálculo de Componentes Principales"
         ),
         html.Div(
+
             children=[
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            [
-                                dbc.Row(
-                                    html.Div(
-                                        [
-                                            dbc.Badge("ℹ️ Método de  Estandarización", color="primary",
-                                            id="tooltip-method", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"},
-                                            ),
-                                            dbc.Tooltip(
-                                                "Selecciona un método de estandarización.",
-                                                target="tooltip-method"
-                                            ),
-                                        ],
-                                        style={"height":"50px", "padding": "0"},
-                                    ),
-                                ),
-                                dbc.Row(
-                                    dbc.Select(
-                                        id='select-escale',
-                                        options=[
-                                            {'label': 'StandardScaler', 'value': "StandardScaler"},
-                                            {'label': 'MinMaxScaler', 'value': "MinMaxScaler"},
-                                        ],
-                                        value="StandardScaler",
-                                        style={"font-size": "medium"},
+                    dbc.Badge("ℹ️ Método de  Estandarización", color="primary",
+                    id="tooltip-method", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"},
+                    ),
+                    dbc.Tooltip(
+                        "Selecciona un método de estandarización.",
+                        target="tooltip-method"
+                    ),
+                    dbc.Select(
+                        
+                    id='select-escale',
+                    options=[
+                        {'label': 'StandardScaler', 'value': "StandardScaler"},
+                        {'label': 'MinMaxScaler', 'value': "MinMaxScaler"},
+                    ],
+                    value="StandardScaler",
+                    style={"font-size": "medium"},
                                         
     
                                     ),
-                                   
-                                    
-                                    style={"height":"50px"},
-                                ),
-                               
-                            ],
-                            class_name="me-3"
-                        ),
-                        dbc.Col(
-                            [
-                                dbc.Row(
-                                    html.Div(
-                                        [
-                                            dbc.Badge("ℹ️ Núm. Componentes principales", color="primary",
-                                                id="tooltip-numpc", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
-                                            ),
-                                            dbc.Tooltip(
-                                                "Elige la cantidad de componentes que quieras tomar en cuenta para el cálculo.",
-                                                target="tooltip-numpc"
-                                            ),
-                                        ],
-                                        style={"height":"50px", "padding": "0"},
-                                    ),
-                                ),
-                                dbc.Row(
-                                    dbc.Input(
-                                        id='n_components',
-                                        type='number',
-                                        placeholder='None',
-                                        value=None,
-                                        min=1,
-                                        max=df.select_dtypes(include='number').shape[1],
-                                        style={"font-size": "medium"}
-                                    ),
-                                    style={"height":"50px"}
-                                ),
-                            ],
-                            class_name="me-3"
-                        ),
-                        dbc.Col(
-                            [
-                                dbc.Row(
-                                    html.Div(
-                                        [dbc.Badge("ℹ️ Porcentaje de Relevancia", color="primary",
-                                            id="tooltip-percentaje", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
-                                            ),
-                                        dbc.Tooltip("Muestra la cantidad de relevancia tomando en cuenta los conponentes seleccionados.",
-                                                    target="tooltip-percentaje"
-                                            ),
-                                        ],
-                                    style={"height":"50px"},
-                                    ),
-                                ),
-                                dbc.Row(
-                                    dbc.Input(
-                                        id='relevancia',
-                                        type='number',
-                                        placeholder='None',
-                                        value=0.9,
-                                        min=0.75,
-                                        max=0.9,
-                                        style={"font-size": "medium"}
-                                    ),
-                                ),
-                            ],
-                            class_name="me-3"
-                        ),
-                    ],
-                    style={"justify-content": "between", "height": "100%"}
-                ),
-                
-
             ],
             style={"font-size":"20px"},
             className="mt-4",
         ),
+        html.Div(id='estandar'),
+        html.Div(
+            children=[
+            dbc.Badge("ℹ️ Núm. Componentes principales", color="primary",
+                id="tooltip-numpc", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+            ),
+            dbc.Tooltip(
+                "Elige la cantidad de componentes que quieras tomar en cuenta para el cálculo.",
+                target="tooltip-numpc"
+            ),
+            dbc.Input(
+                id='n_components',
+                type='number',
+                placeholder='Ej:5',
+                value=1,
+                min=1,
+                max=df.select_dtypes(include='number').shape[1],
+                style={"font-size": "medium"}
+            ),
 
+
+            ]
+        ),
+        html.Div(id='numComp'),
     ]
 )
 
@@ -296,4 +227,72 @@ def update_output(list_of_contents, list_of_names,list_of_dates):
         return children
 
 
+@callback(
+    Output(component_id='estandar', component_property='children'),
+    Input(component_id='select-escale', component_property='value')
+)
+def update_estandar(value):
+    estandarizado=estandarizacion(value,df)
 
+    return html.Div(
+        create_data_table(estandarizado)
+    )
+def create_data_table(estandarizado)->html.Table:
+    return html.Table(
+            dash_table.DataTable(
+                data=estandarizado.to_dict('records'),
+                page_size=8,
+                sort_action='native',
+                sort_mode='multi',
+                column_selectable='single',
+                row_deletable=False,
+                cell_selectable=False,
+                editable=False,
+                row_selectable='multi',
+                columns=[{'name': i, 'id': i, "deletable":False} for i in df.columns],
+                style_table={
+                    'padding': 10,
+                    'height': '300px', 
+                    'overflowX': 'auto',
+                    'minWidth': '100%'
+                    },
+            ),
+            style={'marginLeft': 'auto',
+                'marginRight': 'auto',
+                'width':'90%'
+                }
+        ),
+
+
+
+def create_table(datatypes) -> html.Table:
+    return html.Table(
+
+            dash_table.DataTable(
+            data=datatypes.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in datatypes.columns],
+            fixed_rows={'headers': True},
+                style_cell={
+                    'textAlign': 'left',
+                    'padding': '1em',
+                    'whiteSpace': 'normal',
+                    'width': '50%',
+                    
+                },
+                style_header={
+                    'fontWeight': 'bold',
+                },
+                style_table={
+                    'height': '600px',
+                    'overflowY': 'auto',
+                    'overflowX': 'auto',
+                }
+            ),
+            style={
+                'marginLeft': 'auto',
+                'marginRight': 'auto',
+                'width': 500
+                
+                }
+        )
+    
