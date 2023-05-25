@@ -11,7 +11,7 @@ def main() -> None:
     '''
     app = Dash(
         external_stylesheets=[dbc.themes.LUX],
-        suppress_callback_exceptions=True
+        suppress_callback_exceptions=True,
         )
     app.title = "MineWizard"
     app.layout = create_layout(app)
