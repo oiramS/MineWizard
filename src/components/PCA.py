@@ -69,22 +69,15 @@ def render(app: Dash) -> html.Div:
     )
 )
 def estandarizacion(value,df):
+    global Estandarizar
     if value == 'StandardScaler':
         Estandarizar=StandardScaler().fit_transform(df)
     elif value == 'MinMaxScaler':
         Estandarizar=MinMaxScaler().fit_transform(df)
     return pd.DataFrame(Estandarizar,columns=df.columns)
-def pricoman(Estandarizar):
-    MEstandarizada=Estandarizar.fit_transform(NuevaMatriz)
-    pd.DataFrame(MEstandarizada,columns=NuevaMatriz.columns)
-    principal=PCA(n_components=None)
-    principal.fit(MEstandarizada)
-    print(principal.components_)
-    return html.Div(
-        dash_table.DataTable(
-            data=MEstandarizada
-        )
-    )
+
+
+
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
     global df
@@ -199,7 +192,7 @@ def parse_contents(contents, filename, date):
                 id='n_components',
                 type='number',
                 placeholder='Ej:5',
-                value=1,
+                value=3,
                 min=1,
                 max=df.select_dtypes(include='number').shape[1],
                 style={"font-size": "medium"}
@@ -229,9 +222,11 @@ def update_output(list_of_contents, list_of_names,list_of_dates):
 
 @callback(
     Output(component_id='estandar', component_property='children'),
-    Input(component_id='select-escale', component_property='value')
+    Input(component_id='n_components', component_property='value'),
+    State(component_id='select-escale', component_property='value')
 )
-def update_estandar(value):
+def update_estandar(n_components,value):
+    global estandarizado
     estandarizado=estandarizacion(value,df)
 
     return html.Div(
@@ -296,3 +291,24 @@ def create_table(datatypes) -> html.Table:
                 }
         )
     
+@callback(
+    Output(component_id='numComp', component_property='children'),
+    Input(component_id='n_components', component_property='value'))
+def update_components(value):
+    pca=PCA(n_components=value)
+    pca.fit(Estandarizar)
+    components=pd.DataFrame(abs(pca.components_),columns=df.columns)
+    varianza=pca.explained_variance_ratio_
+    varianza_acumulada= sum(varianza[0:value])
+    #return create_data_table(components)
+    return html.Div(
+        [
+        create_table(components),
+        html.Div(
+            f"Proporción de varianza: {varianza}"
+        ),
+        html.Div(
+            f"Varianza acumulada para: {value} componentes: {varianza_acumulada}"
+        )
+        ])
+
