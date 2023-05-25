@@ -36,7 +36,7 @@ def render(app: Dash) -> html.Div:
                 className="four columns",
                 children=html.Div(
                     [
-                        html.H4("Carga o elige el dataset para iniciar el Análisis Exploratorio de Datos", className="text-upload"),
+                        html.H4("Carga dataset para Análisis de Componentes Principales", className="text-upload"),
                         # Muestra el módulo de carga
                         dcc.Upload(
                             id="upload-data",
@@ -103,10 +103,10 @@ def parse_contents(contents, filename, date):
             create_data_table(df),
         ),
         
-        dbc.Alert('Variables numéricas: {}'.format(df.select_dtypes(include='number').shape[1]), color="info", class_name="my-3 mx-auto text-center w-25"),
+        dbc.Alert('Cantidad de variables totales: {}'.format(df.select_dtypes(include='number').shape[1]), color="info", class_name="my-3 mx-auto text-center w-25"),
 
         html.H3(
-            "Evidencia de datos correlacionados"
+            "Correlaciones de datos"
         ),
 
         dcc.Graph(
@@ -137,7 +137,7 @@ def parse_contents(contents, filename, date):
         html.Div(
             children=[
                 dbc.Badge(
-                    "Identificación de correlaciones",
+                    "Correlaciones presentes",
                     pill=True,
                     color="primary",
                     style={"font-size":"15px"}
@@ -181,7 +181,7 @@ def parse_contents(contents, filename, date):
         html.Div(id='estandar'),
         html.Div(
             children=[
-            dbc.Badge("ℹ️ Núm. Componentes principales", color="primary",
+            dbc.Badge("ℹ️ Cantidad de Componentes principales", color="primary",
                 id="tooltip-numpc", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
             ),
             dbc.Tooltip(
@@ -300,15 +300,15 @@ def update_components(value):
     components=pd.DataFrame(abs(pca.components_),columns=df.columns)
     varianza=pca.explained_variance_ratio_
     varianza_acumulada= sum(varianza[0:value])
-    #return create_data_table(components)
-    return html.Div(
-        [
-        create_table(components),
-        html.Div(
-            f"Proporción de varianza: {varianza}"
-        ),
-        html.Div(
-            f"Varianza acumulada para: {value} componentes: {varianza_acumulada}"
-        )
-        ])
+    return create_data_table(components)
+    # return html.Div(
+    #     [
+    #     create_table(components),
+    #     html.Div(
+    #         f"Proporción de varianza: {varianza}"
+    #     ),
+    #     html.Div(
+    #         f"Varianza acumulada para: {value} componentes: {varianza_acumulada}"
+    #     )
+    #     ])
 

@@ -27,7 +27,7 @@ def render(app: Dash) -> html.Div:
                 className="four columns",
                 children=html.Div(
                     [
-                        html.H4("Carga o elige el dataset para iniciar el Análisis Exploratorio de Datos", className="text-upload"),
+                        html.H4("Carga de dataset para Análisis Exploratorio de Datos", className="text-upload"),
                         # Muestra el módulo de carga
                         dcc.Upload(
                             id="upload-data",
