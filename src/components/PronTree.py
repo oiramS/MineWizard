@@ -7,12 +7,12 @@ from io import BytesIO
 from dash import dash_table
 import base64
 import numpy as np
-
+import dash
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-
+from sklearn.tree import export_text
 from .data_frame_transformer import Df_transformer
 
 df_transformer = Df_transformer()
@@ -115,7 +115,8 @@ def Prontree(contents, filename, date):
                 ),
             ])
         ]),
-        html.Div(id="prediction-output")
+            html.Div(id="prediction-output"),
+              
     ],
 )
 @callback(Output('output-data-upload-ProTree', 'children'),
@@ -182,7 +183,7 @@ def perform_prediction(target_column, feature_columns):
         
         # Initialize the Decision Tree Regressor
         regressor = DecisionTreeRegressor(random_state=0)
-        
+        df_transformer.set_predictor(regressor)
         # Fit the model
         regressor.fit(X_train, Y_train)
         
@@ -194,14 +195,58 @@ def perform_prediction(target_column, feature_columns):
         mae = mean_absolute_error(Y_test, Y_pred)
         r2 = r2_score(Y_test, Y_pred)
         
+        reporte = export_text(regressor, feature_names=feature_columns)
+        
         return html.Div([
             dbc.Alert(f"Error Cuadrático Medio: {mse}"),
             dbc.Alert(f"Error Absoluto Medio: {mae}"),
             dbc.Alert(f"R^2 Score: {r2}"),
-            
+            html.Div([html.Pre(reporte)],
+                     style={'height': '20em', 'overflowY': 'scroll', 'border': '1px solid', 'padding': '10px'},
+                     ),
+            html.H3("Realizar predicción"),
+            html.Div(id="feature-inputs-div",
+                    style={
+                    'marginLeft': 'auto',
+                    'marginRight': 'auto',
+                    'width': 500
+                }),
+            html.Button(
+                "Predecir", 
+                id="predict-button", 
+                n_clicks=0,
+                className="btn btn-success",
+                style={
+                    'marginTop' : '10px',
+                    'marginLeft': '50%',
+                    'marginRight': '50%',
+                    'width': 300
+                }
+            ),
+            html.Div(id="manual_prediction-output")
             ]
         )
+        
+        
+        
 
+@callback(
+    Output("feature-inputs-div", "children"),
+    Input("feature-columns-dropdown", "value"),
+    Input("target-column-dropdown", "value")
+)
+def create_inputs(inputs, target):
+    input_elements = []
+    for inp in inputs:
+        input_elements.append(
+            dbc.Row([
+            dcc.Input(id=f"feature-input-{inp}", type="number", placeholder=inp)
+            ],
+            style={
+                'marginTop' : '10px',
+            })
+        )
+    return input_elements
 
 def create_data_table(estandarizado)->html.Table:
     return html.Table(
@@ -261,4 +306,27 @@ def create_table(datatypes) -> html.Table:
                 
                 }
         )
+
+@callback(
+    Output("manual_prediction-output", "children"),
+    Input("predict-button", "n_clicks"),
+    Input("target-column-dropdown", "value"),
+    State("feature-columns-dropdown", "value")
+)
+def make_prediction(n_clicks, target_column, feature_columns ):
+    if n_clicks > 0:
+        # Read the data from a CSV file (assuming it's named "data.csv")
+        regresor = df_transformer.get_preditor()
+        # Create a DataFrame with the input values
+        input_data = {}
+        for col in feature_columns:
+            input_value = float(dash.callback_context.states[f"feature-input-{col}.value"])
+            input_data[col] = [input_value]
+        input_data = pd.DataFrame(input_data)
+        
+        # Perform prediction on the input values
+        prediction = regresor.predict(input_data)
+        
+        return f"Prediction: {prediction[0]}"
     
+    return ""

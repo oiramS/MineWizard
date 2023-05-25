@@ -22,6 +22,12 @@ class Df_transformer:
     def set_varianza(self, varianza):
         self.varianza = varianza
     
+    def set_predictor(self, predictor):
+        self.predictor = predictor
+    
+    def get_preditor(self):
+        return self.predictor
+    
     def get_standar_scaler(self):
         return self.standar_scaler
     
