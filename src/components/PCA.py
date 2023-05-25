@@ -39,7 +39,7 @@ def render(app: Dash) -> html.Div:
                 className="four columns",
                 children=html.Div(
                     [
-                        html.H4("Carga o elige el dataset para iniciar el Análisis Exploratorio de Datos", className="text-upload"),
+                        html.H4("Carga dataset para Análisis de Componentes Principales", className="text-upload"),
                         # Muestra el módulo de carga
                         dcc.Upload(
                             id="upload-data",
@@ -98,10 +98,10 @@ def parse_contents(contents, filename, date):
             create_data_table(df_transformer.get_df()),
         ),
         
-        dbc.Alert('Variables numéricas: {}'.format(df.select_dtypes(include='number').shape[1]), color="info", class_name="my-3 mx-auto text-center w-25"),
+        dbc.Alert('Cantidad de variables totales: {}'.format(df.select_dtypes(include='number').shape[1]), color="info", class_name="my-3 mx-auto text-center w-25"),
 
         html.H3(
-            "Evidencia de datos correlacionados"
+            "Correlaciones de datos"
         ),
 
         dcc.Graph(
@@ -164,8 +164,8 @@ def parse_contents(contents, filename, date):
                         
                     id='select-escale',
                     options=[
-                        {'label': 'StandardScaler', 'value': "StandardScaler"},
-                        {'label': 'MinMaxScaler', 'value': "MinMaxScaler"},
+                        {'label': 'Estándar', 'value': "StandardScaler"},
+                        {'label': 'MinMax', 'value': "MinMaxScaler"},
                     ],
                     value="StandardScaler",
                     style={"font-size": "medium"},
@@ -179,7 +179,7 @@ def parse_contents(contents, filename, date):
         html.Div(id='estandar'),
         html.Div(
             children=[
-            dbc.Badge("ℹ️ Núm. Componentes principales", color="primary",
+            dbc.Badge("ℹ️ Cantidad de Componentes principales", color="primary",
                 id="tooltip-numpc", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
             ),
             dbc.Tooltip(
