@@ -134,21 +134,21 @@ def parse_contents(contents, filename, date):
                 },
             },
         ),
-        html.Div(
-            children=[
-                dbc.Badge(
-                    "Correlaciones presentes",
-                    pill=True,
-                    color="primary",
-                    style={"font-size":"15px"}
-                ),
-                html.P("🟥 Correlación positiva fuerte: De -1.0 a -0.67 y 0.67 a 1.0", className="ms-4"),
-                html.P("⬜ Correlación débil: De -0.66 a -0.34 y 0.34 a 0.66", className="ms-4"),
-                html.P("🟦 Correlación negativa fuerte: De -0.33 a 0.0 y 0.0 a 0.33", className="ms-4"),
-                dbc.Alert("⚠️ Si no se identifica almenos una correlación fuerte, entonces PCA no aplica.", color="warning"),
-            ],
-            className="mt-3"
-        ),
+        # html.Div(
+        #     children=[
+        #         dbc.Badge(
+        #             "Correlaciones presentes",
+        #             pill=True,
+        #             color="primary",
+        #             style={"font-size":"15px"}
+        #         ),
+        #         # html.P("🟥 Correlación positiva fuerte: De -1.0 a -0.67 y 0.67 a 1.0", className="ms-4"),
+        #         # html.P("⬜ Correlación débil: De -0.66 a -0.34 y 0.34 a 0.66", className="ms-4"),
+        #         # html.P("🟦 Correlación negativa fuerte: De -0.33 a 0.0 y 0.0 a 0.33", className="ms-4"),
+        #         # dbc.Alert("⚠️ Si no se identifica almenos una correlación fuerte, entonces PCA no aplica.", color="warning"),
+        #     ],
+        #     className="mt-3"
+        # ),
         html.H3(
             "Cálculo de Componentes Principales"
         ),
@@ -166,8 +166,8 @@ def parse_contents(contents, filename, date):
                         
                     id='select-escale',
                     options=[
-                        {'label': 'StandardScaler', 'value': "StandardScaler"},
-                        {'label': 'MinMaxScaler', 'value': "MinMaxScaler"},
+                        {'label': 'Estándar', 'value': "StandardScaler"},
+                        {'label': 'MinMax', 'value': "MinMaxScaler"},
                     ],
                     value="StandardScaler",
                     style={"font-size": "medium"},
