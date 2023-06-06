@@ -1,5 +1,5 @@
 from dash import Dash, html, Input, Output
-from . import overview, EDA, PCA, PronForest, PronTree, ClassTree, ClassForest,kMeans,notFound
+from . import overview, EDA, PCA, PronForest, PronTree, ClassTree, ClassForest,notFound
 
 def render(app: Dash) -> html.Div:
     '''
@@ -25,8 +25,6 @@ def render(app: Dash) -> html.Div:
             return PronTree.render(app)
         elif pathname == "/p_forest":
             return PronForest.render(app)
-        elif pathname == "/k_means":
-            return kMeans.render(app)
         else:
             return notFound.render(app)
     return content

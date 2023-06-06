@@ -29,6 +29,7 @@ def render(app: Dash) -> html.Div:
             in_navbar=True,
             label="Pronóstico",
         ),
+        dbc.NavItem(dbc.NavLink("k-Means", href="/k_means")) 
     ],
     brand="MineWizard",
     brand_href="/",

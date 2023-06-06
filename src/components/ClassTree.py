@@ -1,5 +1,5 @@
 from dash import Dash, html
-from dash import dcc, html, Input, Output, State, callback# Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
+from dash import dcc, html, Input, Output, State, callback, ALL
 import pandas as pd
 import dash_bootstrap_components as dbc
 import io
@@ -9,7 +9,7 @@ import base64
 import numpy as np
 import dash
 from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 from sklearn.tree import export_text
@@ -23,12 +23,12 @@ def render(app: Dash) -> html.Div:
     '''
     return html.Div(
         children=html.Div([
-            html.H1(' Árbol de pronóstico'),
-            #Explicación de Árboles de pronóstico
+            html.H1('Árbol de clasificación'),
+            #Explicación de Árboles de clasificación
             html.Div(
             id="contenido",
             children=[
-                html.P("Árbol de decisión, es una prueba estadística de predicción cuya función objetivo es la de interpretar resultados a partir de observaciones y construcciones lógicas (Barrientos, Cruz y Acosta, 2009)."),
+                html.P("El Árbol de clasificación, cuando la variable dependiente es de tipo cualitativa. Se trata de dar con un esquema de múltiples bifuraciones, anidadas en dorma de árbol, para obtener una predicción para la clase de pertenencia de un elemento (Martinez de Lejarza,s.f.)."),
             
                 ],         
             ),
@@ -37,7 +37,7 @@ def render(app: Dash) -> html.Div:
                 className="four columns",
                 children=html.Div(
                     [
-                        html.H4("Carga de dataset para iniciar el Árbol de pronóstico", className="text-upload"),
+                        html.H4("Carga de dataset para iniciar el Árbol de clasificación", className="text-upload"),
                         # Muestra el módulo de carga
                         dcc.Upload(
                             id="upload-data",
@@ -61,7 +61,7 @@ def render(app: Dash) -> html.Div:
                         accept='.csv',
                         className="drag"
                         ),
-                    html.Div(id='output-data-upload-ProTree'),
+                    html.Div(id='output-data-upload-ClassTree'),
                     ],
                 ),
             )
@@ -95,31 +95,105 @@ def Prontree(contents, filename, date):
             create_data_table(df_transformer.get_df()),
         ),
         
-        
+        dcc.Graph(
+            id='matriz',
+            figure={
+                'data': [
+                    {'x': df.corr(numeric_only=True).columns, 'y': df.corr().columns, 'z': np.triu(df.corr().values, k=1), 'type': 'heatmap', 'colorscale': 'sepal_length', 'color_continuous_scale':'scale' , 'symmetric': False}
+                ],
+                'layout': {
+                    'title': 'Matriz de correlación',
+                    'xaxis': {'side': 'down'},
+                    'yaxis': {'side': 'left'},
+                    # 'plot_bgcolor':'rgba(0,0,0,0)', 
+                    # 'paper_bgcolor':'rgba(0,0,0,0)',
+                    # 'font' : {'color' : '#7FDBFF'},
+                    # Agregamos el valor de correlación por en cada celda (text_auto = True)
+                    'annotations': [
+                        dict(
+                            x=df.corr().columns[i],
+                            y=df.corr().columns[j],
+                            text=str(round(df.corr().values[i][j], 4)),
+                            showarrow=False,
+                            font=dict(
+                                color='white' if abs(df.corr().values[i][j]) >= 0.67  else 'black'
+                            ),
+                        ) for i in range(len(df.corr().columns)) for j in range(i)
+                    ],
+                },
+            },
+        ),
         html.H3("Selección de variables"),
         dbc.Row([
             dbc.Col([
                 html.Div([
                     html.Label("Selecciona las variables predictoras:"),
-                    dcc.Dropdown(id="feature-columns-dropdown", multi=True)
+                    dcc.Dropdown(id="feature-columns-dropdown-cTree", multi=True)
                 ], 
-                style={"width": "300px", "margin-bottom": "20px"}
+                style={"margin-bottom": "20px", "padding":20}
                 ),
             ]),
             dbc.Col([
                 html.Div([
-                    html.Label("Selecciona la variable a pronosticar:"),
-                    dcc.Dropdown(id="target-column-dropdown")
+                    html.Label("Selecciona la variable a clasificar:"),
+                    dcc.Dropdown(id="target-column-dropdown-cTree")
                 ], 
-                style={"width": "300px", "margin-bottom": "20px"}
+                style={"margin-bottom": "20px", "padding": 20}
                 ),
-            ])
+            ]),
+
         ]),
-            html.Div(id="prediction-output"),
+        html.H3("Selecciona los parámetros para el árbol"),
+        html.Div([
+            dbc.Row([
+            dcc.Input(id="max_depth", type="number", value=None,placeholder="Profundidad del árbol"),
+            ],
+            style={
+                'marginTop' : '10px', 
+            }),  
+            dbc.Row([
+            dcc.Input(id="min_samples_split", type="number",value=None,placeholder="Mínimo de muestras para dividir"),
+           ],
+            style={
+                'marginTop' : '10px', 
+            }),   
+            dbc.Row([
+            dcc.Input(id="min_samples_leaf", type="number",value=None,placeholder="Mínimo de muestras en hojas")
+            ],
+            style={
+                'marginTop' : '10px', 
+            }),
+            html.Button(
+                "Generar Modelo", 
+                id="generate-button", 
+                n_clicks=0,
+                className="btn btn-success",
+                style={
+                    'marginTop' : '10px',
+                    'marginLeft': '75%',
+                }
+            ),
+            ],     
+            style={
+                'marginLeft': 'auto',
+                'marginRight': 'auto',
+                'width': '80%',
+                'padding':10,
+            }        
+        ),
+        
+        html.Div(id="prediction-output-cTree"),
+            
               
     ],
+    style={
+                'marginLeft': 'auto',
+                'marginRight': 'auto',
+                'width': '90%',
+                'padding':10,
+            }
 )
-@callback(Output('output-data-upload-ProTree', 'children'),
+@callback(Output('output-data-upload-ClassTree', 'children'),
               Input('upload-data', 'contents'),
               State('upload-data', 'filename'),
               State('upload-data', 'last_modified'))
@@ -132,10 +206,10 @@ def update_output(list_of_contents, list_of_names,list_of_dates):
         return children
 
 @callback(
-    Output("target-column-dropdown", "options"),
-    Output("feature-columns-dropdown", "options"),
-    Input("target-column-dropdown", "value"),
-    State("feature-columns-dropdown", "value")
+    Output("target-column-dropdown-cTree", "options"),
+    Output("feature-columns-dropdown-cTree", "options"),
+    Input("target-column-dropdown-cTree", "value"),
+    State("feature-columns-dropdown-cTree", "value")
 )
 def update_column_options(target_column, feature_columns):
     # Read the data from a CSV file (assuming it's named "data.csv")
@@ -151,14 +225,17 @@ def update_column_options(target_column, feature_columns):
     return option, options
 
 @callback(
-    Output("prediction-output", "children"),
-    Input("target-column-dropdown", "value"),
-    State("feature-columns-dropdown", "value")
+    Output("prediction-output-cTree", "children"),
+    Input("generate-button", "n_clicks"),
+    State("max_depth", "value"),
+    State("min_samples_split", "value"),
+    State("min_samples_leaf", "value"),
+    State("target-column-dropdown-cTree","value"),
+    State("feature-columns-dropdown-cTree","value"),
 )
-def perform_prediction(target_column, feature_columns):
-    if(target_column != None and  any(feature_columns)):
+def generate_model(n_clicks,max_depth,min_samples_split,min_samples_leaf,target_column, feature_columns):
+    if(target_column != None and  any(feature_columns) and n_clicks>0):
         data = df_transformer.get_df()
-        
         # Separate the features and the target variable
         X = np.array(data[feature_columns])
         Y = np.array(data[[target_column]])
@@ -180,36 +257,38 @@ def perform_prediction(target_column, feature_columns):
         #     html.Div(Y_test.shape),
         #     html.Div(create_data_table(data))    
         #     ])
-        
-        # Initialize the Decision Tree Regressor
-        regressor = DecisionTreeRegressor(random_state=0)
-        df_transformer.set_predictor(regressor)
+        samples_leaf = min_samples_leaf if min_samples_leaf != None else 1 
+        samples_split= min_samples_split if min_samples_split != None else 2 
+        depth=max_depth
+            
+        # Initialize the Decision Tree Classifier
+        classifier = DecisionTreeClassifier( min_samples_leaf=samples_leaf,min_samples_split=samples_split, max_depth=depth,random_state=0)
+        df_transformer.set_predictor(classifier)
         # Fit the model
-        regressor.fit(X_train, Y_train)
+        classifier.fit(X_train, Y_train)
         
         # Perform prediction
-        Y_pred = regressor.predict(X_test)
+        Y_pred = classifier.predict(X_test)
         
         # Calculate evaluation metrics
         mse = mean_squared_error(Y_test, Y_pred)
         mae = mean_absolute_error(Y_test, Y_pred)
         r2 = r2_score(Y_test, Y_pred)
         
-        reporte = export_text(regressor, feature_names=feature_columns)
+        reporte = export_text(classifier, feature_names=feature_columns)
         
         return html.Div([
-            dbc.Alert(f"Error Cuadrático Medio: {mse}"),
-            dbc.Alert(f"Error Absoluto Medio: {mae}"),
-            dbc.Alert(f"R^2 Score: {r2}"),
+            dbc.Alert(f"Error Cuadrático Medio: {round(mse,4)}"),
+            dbc.Alert(f"Error Absoluto Medio: {round(mae,4)}"),
+            dbc.Alert(f"R^2 Score: {round(r2,4)}"),
             html.Div([html.Pre(reporte)],
                      style={'height': '20em', 'overflowY': 'scroll', 'border': '1px solid', 'padding': '10px'},
                      ),
             html.H3("Realizar predicción"),
-            html.Div(id="feature-inputs-div",
+            html.Div(id="feature-inputs-div-cTree",
                     style={
                     'marginLeft': 'auto',
                     'marginRight': 'auto',
-                    'width': 500
                 }),
             html.Button(
                 "Predecir", 
@@ -218,29 +297,33 @@ def perform_prediction(target_column, feature_columns):
                 className="btn btn-success",
                 style={
                     'marginTop' : '10px',
-                    'marginLeft': '50%',
-                    'marginRight': '50%',
-                    'width': 300
+                    'marginLeft': '75%',
                 }
             ),
-            html.Div(id="manual_prediction-output")
-            ]
+            html.Div(id="manual_prediction-output-cTree")
+            ],
+            style={
+                'marginLeft': 'auto',
+                'marginRight': 'auto',
+                'width': '90%',
+                'padding':10,
+            } 
         )
         
         
         
 
 @callback(
-    Output("feature-inputs-div", "children"),
-    Input("feature-columns-dropdown", "value"),
-    Input("target-column-dropdown", "value")
+    Output("feature-inputs-div-cTree", "children"),
+    Input("feature-columns-dropdown-cTree", "value"),
+    Input("target-column-dropdown-cTree", "value")
 )
 def create_inputs(inputs, target):
     input_elements = []
-    for inp in inputs:
+    for index, inp in enumerate(inputs):
         input_elements.append(
             dbc.Row([
-            dcc.Input(id=f"feature-input-{inp}", type="number", placeholder=inp)
+            dcc.Input(id={"type":"feature-input-value", "index":index}, type="number",  placeholder=inp)
             ],
             style={
                 'marginTop' : '10px',
@@ -302,31 +385,31 @@ def create_table(datatypes) -> html.Table:
             style={
                 'marginLeft': 'auto',
                 'marginRight': 'auto',
-                'width': 500
+                'width': '100%'
                 
                 }
         )
 
 @callback(
-    Output("manual_prediction-output", "children"),
+    Output("manual_prediction-output-cTree", "children"),
     Input("predict-button", "n_clicks"),
-    Input("target-column-dropdown", "value"),
-    State("feature-columns-dropdown", "value")
+    State("feature-columns-dropdown-cTree", "value"),
+    State({"type": "feature-input-value", "index":ALL}, "value")
 )
-def make_prediction(n_clicks, target_column, feature_columns ):
+def make_prediction(n_clicks, feature_columns, feature_values ):
     if n_clicks > 0:
         # Read the data from a CSV file (assuming it's named "data.csv")
         regresor = df_transformer.get_preditor()
         # Create a DataFrame with the input values
         input_data = {}
-        for col in feature_columns:
-            input_value = float(dash.callback_context.states[f"feature-input-{col}.value"])
+        for i, col in enumerate(feature_columns):
+            input_value = float(feature_values[i])
             input_data[col] = [input_value]
         input_data = pd.DataFrame(input_data)
         
         # Perform prediction on the input values
-        prediction = regresor.predict(input_data)
+        prediction = regresor.predict(input_data.values)
         
-        return f"Prediction: {prediction[0]}"
+        return dbc.Alert(f"Clasificacion: {prediction[0]}")
     
     return ""

@@ -24,7 +24,7 @@ def render(app: Dash) -> html.Div:
     return html.Div(
         children=html.Div([
             html.H1('Bosque de pronóstico'),
-            #Explicación de Árboles de pronóstico
+            #Explicación de Bosques de pronóstico
             html.Div(
             id="contenido",
             children=[
@@ -37,7 +37,7 @@ def render(app: Dash) -> html.Div:
                 className="four columns",
                 children=html.Div(
                     [
-                        html.H4("Carga de dataset para iniciar el Árbol de pronóstico", className="text-upload"),
+                        html.H4("Carga de dataset para iniciar el Bosque de Pronóstico", className="text-upload"),
                         # Muestra el módulo de carga
                         dcc.Upload(
                             id="upload-data",
@@ -271,7 +271,13 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
                 }
             ),
             html.Div(id="manual_prediction-output-PF")
-            ]
+            ],
+            style={
+                'marginLeft': 'auto',
+                'marginRight': 'auto',
+                'width': '90%',
+                'padding':10,
+            }
         )
         
         

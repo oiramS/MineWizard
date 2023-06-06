@@ -16,5 +16,11 @@ def render(app: Dash) -> html.Div:
                 y patrones ocultos.
             '''    ,className="example")
 
-        ] )
+        ] ),
+        style={
+                'marginLeft': 'auto',
+                'marginRight': 'auto',
+                'width': '90%',
+                'padding':10,
+        } 
     )

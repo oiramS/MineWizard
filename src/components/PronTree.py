@@ -321,7 +321,7 @@ def create_data_table(estandarizado)->html.Table:
             style={'marginLeft': 'auto',
                 'marginRight': 'auto',
                 'width':'90%'
-                }
+            }
         ),
 
 
