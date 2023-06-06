@@ -113,9 +113,53 @@ def Prontree(contents, filename, date):
                 ], 
                 style={"width": "300px", "margin-bottom": "20px"}
                 ),
-            ])
+            ]),
+
         ]),
-            html.Div(id="prediction-output"),
+        html.H3("Selecciona los parámetros para el árbol"),
+        html.Div([
+            dbc.Row([
+            dcc.Input(id="max_depth", type="number", value=None,placeholder="Profundidad del árbol"),
+            ],
+            style={
+                'marginTop' : '10px', 
+            }),  
+            dbc.Row([
+            dcc.Input(id="min_samples_split", type="number",value=None,placeholder="Mínimo de muestras para dividir"),
+           ],
+            style={
+                'marginTop' : '10px', 
+            }),   
+            dbc.Row([
+            dcc.Input(id="min_samples_leaf", type="number",value=None,placeholder="Mínimo de muestras en hojas")
+            ],
+            style={
+                'marginTop' : '10px', 
+            }),
+            html.Button(
+                "Generar Modelo", 
+                id="generate-button", 
+                n_clicks=0,
+                className="btn btn-success",
+                style={
+                    'marginTop' : '10px',
+                    'marginLeft': '50%',
+                    'marginRight': '50%',
+                    'width': 300,
+
+                }
+            ),
+            ],     
+            style={
+                'marginLeft': 'auto',
+                'marginRight': 'auto',
+                'width': 500,
+                'padding':10,
+            }        
+        ),
+        
+        html.Div(id="prediction-output"),
+            
               
     ],
 )
@@ -152,13 +196,17 @@ def update_column_options(target_column, feature_columns):
 
 @callback(
     Output("prediction-output", "children"),
-    Input("target-column-dropdown", "value"),
-    State("feature-columns-dropdown", "value")
+    Input("generate-button", "n_clicks"),
+    State("max_depth", "value"),
+    State("min_samples_split", "value"),
+    State("min_samples_leaf", "value"),
+    State("target-column-dropdown","value"),
+    State("feature-columns-dropdown","value"),
 )
-def perform_prediction(target_column, feature_columns):
-    if(target_column != None and  any(feature_columns)):
+def generate_model(n_clicks,max_depth,min_samples_split,min_samples_leaf,target_column, feature_columns):
+    if(target_column != None and  any(feature_columns) and n_clicks>0):
         data = df_transformer.get_df()
-        
+        print(feature_columns)
         # Separate the features and the target variable
         X = np.array(data[feature_columns])
         Y = np.array(data[[target_column]])
@@ -180,9 +228,12 @@ def perform_prediction(target_column, feature_columns):
         #     html.Div(Y_test.shape),
         #     html.Div(create_data_table(data))    
         #     ])
-        
+        samples_leaf = min_samples_leaf if min_samples_leaf != None else 1 
+        samples_split= min_samples_split if min_samples_split != None else 2 
+        depth=max_depth
+            
         # Initialize the Decision Tree Regressor
-        regressor = DecisionTreeRegressor(random_state=0)
+        regressor = DecisionTreeRegressor( min_samples_leaf=samples_leaf,min_samples_split=samples_split, max_depth=depth,random_state=0)
         df_transformer.set_predictor(regressor)
         # Fit the model
         regressor.fit(X_train, Y_train)
@@ -311,16 +362,17 @@ def create_table(datatypes) -> html.Table:
     Output("manual_prediction-output", "children"),
     Input("predict-button", "n_clicks"),
     Input("target-column-dropdown", "value"),
-    State("feature-columns-dropdown", "value")
+    State("feature-columns-dropdown", "value"),
 )
 def make_prediction(n_clicks, target_column, feature_columns ):
     if n_clicks > 0:
+        print(feature_columns)
         # Read the data from a CSV file (assuming it's named "data.csv")
         regresor = df_transformer.get_preditor()
         # Create a DataFrame with the input values
         input_data = {}
         for col in feature_columns:
-            input_value = float(dash.callback_context.states[f"feature-input-{col}.value"])
+            input_value = float(dash.ctx.states[f"feature-input-{col}"])
             input_data[col] = [input_value]
         input_data = pd.DataFrame(input_data)
         

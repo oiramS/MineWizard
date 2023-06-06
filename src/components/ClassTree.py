@@ -9,7 +9,7 @@ import base64
 import numpy as np
 import dash
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 from sklearn.tree import export_text
@@ -23,12 +23,12 @@ def render(app: Dash) -> html.Div:
     '''
     return html.Div(
         children=html.Div([
-            html.H1('Bosque de pronóstico'),
+            html.H1(' Árbol de pronóstico'),
             #Explicación de Árboles de pronóstico
             html.Div(
             id="contenido",
             children=[
-                html.P("Un bosque aleatorio es un grupo de árboles de decisión.elegirá características al azar y hará observaciones, construirá un bosque de árboles de decisión y luego promediará los resultados. Es uno de los algoritmos más utilizados debido a su precisión, simplicidad y flexibilidad."),
+                html.P("Árbol de decisión, es una prueba estadística de predicción cuya función objetivo es la de interpretar resultados a partir de observaciones y construcciones lógicas (Barrientos, Cruz y Acosta, 2009)."),
             
                 ],         
             ),
@@ -61,7 +61,7 @@ def render(app: Dash) -> html.Div:
                         accept='.csv',
                         className="drag"
                         ),
-                    html.Div(id='output-data-upload-ProForest'),
+                    html.Div(id='output-data-upload-ProTree'),
                     ],
                 ),
             )
@@ -70,7 +70,7 @@ def render(app: Dash) -> html.Div:
     )
  )
 
-def PronForest(contents, filename, date):
+def Prontree(contents, filename, date):
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
     try:
@@ -101,7 +101,7 @@ def PronForest(contents, filename, date):
             dbc.Col([
                 html.Div([
                     html.Label("Selecciona las variables predictoras:"),
-                    dcc.Dropdown(id="feature-columns-dropdown-PF", multi=True)
+                    dcc.Dropdown(id="feature-columns-dropdown", multi=True)
                 ], 
                 style={"width": "300px", "margin-bottom": "20px"}
                 ),
@@ -109,61 +109,17 @@ def PronForest(contents, filename, date):
             dbc.Col([
                 html.Div([
                     html.Label("Selecciona la variable a pronosticar:"),
-                    dcc.Dropdown(id="target-column-dropdown-PF")
+                    dcc.Dropdown(id="target-column-dropdown")
                 ], 
                 style={"width": "300px", "margin-bottom": "20px"}
                 ),
-            ]),
-
+            ])
         ]),
-        html.H3("Selecciona los parámetros para el bosque"),
-        html.Div([
-            dbc.Row([
-            dcc.Input(id="n_estimators", type="number", value=None,placeholder="Número de estimadores"),
-            ],
-            style={
-                'marginTop' : '10px', 
-            }),  
-            dbc.Row([
-            dcc.Input(id="min_samples_split", type="number",value=None,placeholder="Mínimo de muestras para dividir"),
-           ],
-            style={
-                'marginTop' : '10px', 
-            }),   
-            dbc.Row([
-            dcc.Input(id="min_samples_leaf", type="number",value=None,placeholder="Mínimo de muestras en hojas")
-            ],
-            style={
-                'marginTop' : '10px', 
-            }),
-            html.Button(
-                "Generar Modelo", 
-                id="generate-button", 
-                n_clicks=0,
-                className="btn btn-success",
-                style={
-                    'marginTop' : '10px',
-                    'marginLeft': '50%',
-                    'marginRight': '50%',
-                    'width': 300,
-
-                }
-            ),
-            ],     
-            style={
-                'marginLeft': 'auto',
-                'marginRight': 'auto',
-                'width': 500,
-                'padding':10,
-            }        
-        ),
-        
-        html.Div(id="prediction-output-PF"),
-            
+            html.Div(id="prediction-output"),
               
     ],
 )
-@callback(Output('output-data-upload-ProForest', 'children'),
+@callback(Output('output-data-upload-ProTree', 'children'),
               Input('upload-data', 'contents'),
               State('upload-data', 'filename'),
               State('upload-data', 'last_modified'))
@@ -171,15 +127,15 @@ def PronForest(contents, filename, date):
 def update_output(list_of_contents, list_of_names,list_of_dates):
     if list_of_contents is not None:
         children = [
-            PronForest(c,n,d) for c,n,d in
+            Prontree(c,n,d) for c,n,d in
             zip(list_of_contents, list_of_names,list_of_dates)]
         return children
 
 @callback(
-    Output("target-column-dropdown-PF", "options"),
-    Output("feature-columns-dropdown-PF", "options"),
-    Input("target-column-dropdown-PF", "value"),
-    State("feature-columns-dropdown-PF", "value")
+    Output("target-column-dropdown", "options"),
+    Output("feature-columns-dropdown", "options"),
+    Input("target-column-dropdown", "value"),
+    State("feature-columns-dropdown", "value")
 )
 def update_column_options(target_column, feature_columns):
     # Read the data from a CSV file (assuming it's named "data.csv")
@@ -195,18 +151,14 @@ def update_column_options(target_column, feature_columns):
     return option, options
 
 @callback(
-    Output("prediction-output-PF", "children"),
-    Input("generate-button", "n_clicks"),
-    State("n_estimators", "value"),
-    State("min_samples_split", "value"),
-    State("min_samples_leaf", "value"),
-    State("target-column-dropdown-PF","value"),
-    State("feature-columns-dropdown-PF","value"),
+    Output("prediction-output", "children"),
+    Input("target-column-dropdown", "value"),
+    State("feature-columns-dropdown", "value")
 )
-def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,target_column, feature_columns):
-    if(target_column != None and  any(feature_columns) and n_clicks>0):
+def perform_prediction(target_column, feature_columns):
+    if(target_column != None and  any(feature_columns)):
         data = df_transformer.get_df()
-        print(feature_columns)
+        
         # Separate the features and the target variable
         X = np.array(data[feature_columns])
         Y = np.array(data[[target_column]])
@@ -228,12 +180,9 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
         #     html.Div(Y_test.shape),
         #     html.Div(create_data_table(data))    
         #     ])
-        samples_leaf = min_samples_leaf if min_samples_leaf != None else 1 
-        samples_split= min_samples_split if min_samples_split != None else 2 
-        estimators=n_estimators if n_estimators!=None else 100
-            
+        
         # Initialize the Decision Tree Regressor
-        regressor = RandomForestRegressor( min_samples_leaf=samples_leaf,min_samples_split=samples_split, n_estimators=estimators,random_state=0)
+        regressor = DecisionTreeRegressor(random_state=0)
         df_transformer.set_predictor(regressor)
         # Fit the model
         regressor.fit(X_train, Y_train)
@@ -245,8 +194,8 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
         mse = mean_squared_error(Y_test, Y_pred)
         mae = mean_absolute_error(Y_test, Y_pred)
         r2 = r2_score(Y_test, Y_pred)
-        Estimador = regressor.estimators_[0]
-        reporte = export_text(Estimador, feature_names=feature_columns)
+        
+        reporte = export_text(regressor, feature_names=feature_columns)
         
         return html.Div([
             dbc.Alert(f"Error Cuadrático Medio: {mse}"),
@@ -256,7 +205,7 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
                      style={'height': '20em', 'overflowY': 'scroll', 'border': '1px solid', 'padding': '10px'},
                      ),
             html.H3("Realizar predicción"),
-            html.Div(id="feature-inputs-div-PF",
+            html.Div(id="feature-inputs-div",
                     style={
                     'marginLeft': 'auto',
                     'marginRight': 'auto',
@@ -274,7 +223,7 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
                     'width': 300
                 }
             ),
-            html.Div(id="manual_prediction-output-PF")
+            html.Div(id="manual_prediction-output")
             ]
         )
         
@@ -282,9 +231,9 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
         
 
 @callback(
-    Output("feature-inputs-div-PF", "children"),
-    Input("feature-columns-dropdown-PF", "value"),
-    Input("target-column-dropdown-PF", "value")
+    Output("feature-inputs-div", "children"),
+    Input("feature-columns-dropdown", "value"),
+    Input("target-column-dropdown", "value")
 )
 def create_inputs(inputs, target):
     input_elements = []
@@ -359,20 +308,19 @@ def create_table(datatypes) -> html.Table:
         )
 
 @callback(
-    Output("manual_prediction-output-PF", "children"),
+    Output("manual_prediction-output", "children"),
     Input("predict-button", "n_clicks"),
-    Input("target-column-dropdown-PF", "value"),
-    State("feature-columns-dropdown-PF", "value"),
+    Input("target-column-dropdown", "value"),
+    State("feature-columns-dropdown", "value")
 )
 def make_prediction(n_clicks, target_column, feature_columns ):
     if n_clicks > 0:
-        print(feature_columns)
         # Read the data from a CSV file (assuming it's named "data.csv")
         regresor = df_transformer.get_preditor()
         # Create a DataFrame with the input values
         input_data = {}
         for col in feature_columns:
-            input_value = float(dash.ctx.states[f"feature-input-{col}"])
+            input_value = float(dash.callback_context.states[f"feature-input-{col}.value"])
             input_data[col] = [input_value]
         input_data = pd.DataFrame(input_data)
         

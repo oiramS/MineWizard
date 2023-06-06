@@ -13,6 +13,7 @@ def main() -> None:
         external_stylesheets=[dbc.themes.LUX],
         suppress_callback_exceptions=True,
         )
+    
     app.title = "MineWizard"
     app.layout = create_layout(app)
     app.run(
