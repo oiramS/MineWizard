@@ -401,7 +401,7 @@ def make_prediction(n_clicks, feature_columns, feature_values ):
     Output("render-report", "children"),
     Input("select-estimator", "value"),
 )
-def make_prediction(value):
+def show_report(value):
     Estimador = df_transformer.get_estimators()
     reporte = export_text(Estimador[value], feature_names=df_transformer.get_feature_columns())
     
