@@ -1,5 +1,5 @@
 from dash import Dash, html
-from dash import dcc, html, Input, Output, State, callback# Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
+from dash import dcc, html, Input, Output, State, callback, ALL
 import pandas as pd
 import dash_bootstrap_components as dbc
 import io
@@ -103,7 +103,7 @@ def PronForest(contents, filename, date):
                     html.Label("Selecciona las variables predictoras:"),
                     dcc.Dropdown(id="feature-columns-dropdown-PF", multi=True)
                 ], 
-                style={"width": "300px", "margin-bottom": "20px"}
+                style={"margin-bottom": "20px", "padding":20}
                 ),
             ]),
             dbc.Col([
@@ -111,7 +111,7 @@ def PronForest(contents, filename, date):
                     html.Label("Selecciona la variable a pronosticar:"),
                     dcc.Dropdown(id="target-column-dropdown-PF")
                 ], 
-                style={"width": "300px", "margin-bottom": "20px"}
+                style={"margin-bottom": "20px", "padding":20}
                 ),
             ]),
 
@@ -143,9 +143,8 @@ def PronForest(contents, filename, date):
                 className="btn btn-success",
                 style={
                     'marginTop' : '10px',
-                    'marginLeft': '50%',
-                    'marginRight': '50%',
-                    'width': 300,
+                    'marginLeft': '75%',
+                    'padding' : 10
 
                 }
             ),
@@ -153,7 +152,7 @@ def PronForest(contents, filename, date):
             style={
                 'marginLeft': 'auto',
                 'marginRight': 'auto',
-                'width': 500,
+                'width': '80%',
                 'padding':10,
             }        
         ),
@@ -249,9 +248,9 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
         reporte = export_text(Estimador, feature_names=feature_columns)
         
         return html.Div([
-            dbc.Alert(f"Error Cuadrático Medio: {mse}"),
-            dbc.Alert(f"Error Absoluto Medio: {mae}"),
-            dbc.Alert(f"R^2 Score: {r2}"),
+            dbc.Alert(f"Error Cuadrático Medio: {round(mse,4)}"),
+            dbc.Alert(f"Error Absoluto Medio: {round(mae,4)}"),
+            dbc.Alert(f"R^2 Score: {round(r2,4)}"),
             html.Div([html.Pre(reporte)],
                      style={'height': '20em', 'overflowY': 'scroll', 'border': '1px solid', 'padding': '10px'},
                      ),
@@ -260,7 +259,6 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
                     style={
                     'marginLeft': 'auto',
                     'marginRight': 'auto',
-                    'width': 500
                 }),
             html.Button(
                 "Predecir", 
@@ -269,9 +267,7 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
                 className="btn btn-success",
                 style={
                     'marginTop' : '10px',
-                    'marginLeft': '50%',
-                    'marginRight': '50%',
-                    'width': 300
+                    'marginLeft': '75%',
                 }
             ),
             html.Div(id="manual_prediction-output-PF")
@@ -288,10 +284,10 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
 )
 def create_inputs(inputs, target):
     input_elements = []
-    for inp in inputs:
+    for index, inp in enumerate(inputs):
         input_elements.append(
             dbc.Row([
-            dcc.Input(id=f"feature-input-{inp}", type="number", placeholder=inp)
+            dcc.Input(id={"type":"feature-input-value", "index":index}, type="number", placeholder=inp)
             ],
             style={
                 'marginTop' : '10px',
@@ -353,7 +349,7 @@ def create_table(datatypes) -> html.Table:
             style={
                 'marginLeft': 'auto',
                 'marginRight': 'auto',
-                'width': 500
+                'width': '100%'
                 
                 }
         )
@@ -361,24 +357,23 @@ def create_table(datatypes) -> html.Table:
 @callback(
     Output("manual_prediction-output-PF", "children"),
     Input("predict-button", "n_clicks"),
-    Input("target-column-dropdown-PF", "value"),
     State("feature-columns-dropdown-PF", "value"),
+    State({"type": "feature-input-value", "index":ALL}, "value")
 )
-def make_prediction(n_clicks, target_column, feature_columns ):
+def make_prediction(n_clicks, feature_columns, feature_values ):
     if n_clicks > 0:
-        print(feature_columns)
         # Read the data from a CSV file (assuming it's named "data.csv")
         regresor = df_transformer.get_preditor()
         # Create a DataFrame with the input values
         input_data = {}
-        for col in feature_columns:
-            input_value = float(dash.ctx.states[f"feature-input-{col}"])
+        for i, col in enumerate(feature_columns):
+            input_value = float(feature_values[i])
             input_data[col] = [input_value]
         input_data = pd.DataFrame(input_data)
         
         # Perform prediction on the input values
-        prediction = regresor.predict(input_data)
+        prediction = regresor.predict(input_data.values)
         
-        return f"Prediction: {prediction[0]}"
+        return dbc.Alert(f"Predicción: {round(prediction[0], 4)}")
     
     return ""
