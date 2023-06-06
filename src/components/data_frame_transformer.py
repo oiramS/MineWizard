@@ -25,6 +25,18 @@ class Df_transformer:
     def set_predictor(self, predictor):
         self.predictor = predictor
     
+    def set_estimators(self, estimators):
+        self.estimators = estimators
+    
+    def set_feature_columns(self, feature_columns):
+        self.feature_columns = feature_columns
+    
+    def get_feature_columns(self):
+        return self.feature_columns 
+    
+    def get_estimators(self):
+        return self.estimators
+    
     def get_preditor(self):
         return self.predictor
     
