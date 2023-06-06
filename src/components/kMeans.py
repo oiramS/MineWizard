@@ -1,30 +1,26 @@
-from dash import Dash, html, Input, Output
-from . import overview, EDA, PCA, PronForest, PronTree, ClassTree, ClassForest,notFound
+from dash import Dash, html
+
 
 def render(app: Dash) -> html.Div:
     '''
-    navbar 
+    overview
     '''
-    content = html.Div(id="page-content")
-    @app.callback(
-        Output("page-content", "children"),
-        [Input("url", "pathname")]
-        )
-    def display_module(pathname) -> html.Div:
-        if pathname == "/":
-            return overview.render(app)
-        elif pathname == "/eda":
-            return EDA.render(app)
-        elif pathname == "/pca":
-            return PCA.render(app)
-        elif pathname == "/c_tree":
-            return ClassTree.render(app)
-        elif pathname == "/c_forest":
-            return ClassForest.render(app)
-        elif pathname == "/p_tree":
-            return PronTree.render(app)
-        elif pathname == "/p_forest":
-            return PronForest.render(app)
-        else:
-            return notFound.render(app)
-    return content
+    return html.Div(
+        children=html.Div([
+            html.H1('k Means'),
+            html.Div('''
+                MineWizard es una herramienta creada para aprovechar algunas técnicas 
+                de minería de datos para extraer información valiosa y patrones 
+                de grandes conjuntos de datos. Permite a los usuarios interactuar 
+                con los datos, realizar análisis y descubrir relaciones, tendencias
+                y patrones ocultos.
+            '''    ,className="example")
+
+        ] ),
+        style={
+                'marginLeft': 'auto',
+                'marginRight': 'auto',
+                'width': '90%',
+                'padding':10,
+        } 
+    )
