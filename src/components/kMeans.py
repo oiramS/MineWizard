@@ -29,7 +29,7 @@ def render(app: Dash) -> html.Div:
             html.Div(
             id="contenido",
             children=[
-                html.P("Esta técnica no supervisada se basa en identificar grupos en los datos de tal manera que todos los datos del grupo (clúster) son datos con características similares mientras que los datos de los otros grupos son diferentes (Sanz, s.f.)."),
+                html.P("Esta técnica no supervisada se basa en identificar grupos en los datos de tal manera que todos los datos del grupo (clúster) son datos con características similares mientras que los datos de los otros grupos son diferentes."),
                 ],         
             ),
             html.Div(

@@ -29,7 +29,7 @@ def render(app: Dash) -> html.Div:
             html.Div(
             id="contenido",
             children=[
-                html.P("El Análisis de Componentes Principales (en inglés Principal Component Analysis, PCA), es un método estadístico que nos permite reducir la dimensionalidad de los datos con los que estamos trabajando. Se utiliza cuando queremos elegir un menor número de predictores para pronosticar una variable objetivo, o para comprenderlos de una forma más simple (Morán, 2022)."),
+                html.P("El Análisis de Componentes Principales (en inglés Principal Component Analysis, PCA), es un método estadístico que nos permite reducir la dimensionalidad de los datos con los que estamos trabajando. Se utiliza cuando queremos elegir un menor número de predictores para pronosticar una variable objetivo, o para comprenderlos de una forma más simple."),
             ],         
             ),
         #Sección para cargar archivo csv

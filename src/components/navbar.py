@@ -32,6 +32,7 @@ def render(app: Dash) -> html.Div:
         dbc.NavItem(dbc.NavLink("k-Means", href="/k_means")) 
     ],
     brand="MineWizard",
+    #brand=html.Img(src=app.get_asset_url("images/logo.png"), className="navbar-logo",height='100px'),
     brand_href="/",
     color="primary",
     dark=True,

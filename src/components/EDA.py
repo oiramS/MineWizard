@@ -19,7 +19,7 @@ def render(app: Dash) -> html.Div:
             html.Div(
             id="contenido",
             children=[
-                html.P("El anáisis exploratorio de datos (Exploratory Data Análisis, EDA) es una serie de pasos para analizar sets de datos y extraer sus características principales (Granados-López, 2021)"),
+                html.P("El anáisis exploratorio de datos (Exploratory Data Análisis, EDA) es una serie de pasos para analizar sets de datos y extraer sus características principales."),
             ],            
          ),
             html.Div(

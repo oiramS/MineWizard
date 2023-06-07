@@ -28,7 +28,7 @@ def render(app: Dash) -> html.Div:
             html.Div(
             id="contenido",
             children=[
-                html.P("Árbol de decisión, es una prueba estadística de predicción cuya función objetivo es la de interpretar resultados a partir de observaciones y construcciones lógicas (Barrientos, Cruz y Acosta, 2009)."),
+                html.P("Árbol de decisión, es una prueba estadística de predicción cuya función objetivo es la de interpretar resultados a partir de observaciones y construcciones lógicas."),
             
                 ],         
             ),
