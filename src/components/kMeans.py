@@ -273,10 +273,18 @@ def generate_model(n_clicks,clusters,init,feature_columns):
             html.Div(
                 create_data_table(cluster_count)
                 ),
-            html.H5("Obtención de los centroides"),
+            html.H5("Centroides"),
             html.Div(
                 create_data_table(centroides)
                 ),
+            html.H5("Visualizar datos por cluster"),
+            dcc.Dropdown(
+                id="select-kMean-cluster", 
+                options=[{'label': f'cluster {i}', 'value': i} for i in range(clusters)],
+                value=0
+                ),
+            html.Div(id='filter_by_cluster'),
+            
             ],
             style={
                 'marginLeft': 'auto',
@@ -287,7 +295,19 @@ def generate_model(n_clicks,clusters,init,feature_columns):
         )
         
         
-        
+@callback(
+    Output("filter_by_cluster", "children"),
+    Input("select-kMean-cluster", "value")
+)
+def create_inputs(cluster_id):
+    df_to_show = df_transformer.get_kmdf()
+    rslt = df_to_show.loc[df_to_show['clusterP'] == cluster_id]
+    return html.Div(
+        create_data_table(rslt)
+    )
+
+
+      
 
 @callback(
     Output("feature-inputs-div-kMean", "children"),
