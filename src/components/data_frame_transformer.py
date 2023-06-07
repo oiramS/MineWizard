@@ -1,6 +1,7 @@
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler 
 import numpy as np 
+import pandas as pd
 class Df_transformer:
     def __init__(self, dataframe=None):
       self.dataframe = dataframe
@@ -13,6 +14,9 @@ class Df_transformer:
         
     def set_cur_scaler(self, scaler):
         self.cur_scaler = scaler
+        
+    def set_cur_mscaler(self, mscaler):
+        self.cur_mscaler = mscaler
 
     def set_dataframe_PCA(self, dataframe):
         self.dataframe = dataframe
@@ -30,6 +34,12 @@ class Df_transformer:
     
     def set_feature_columns(self, feature_columns):
         self.feature_columns = feature_columns
+        
+    def set_kmdf(self, kdata_frame):
+        self.kdata_frame = kdata_frame
+    
+    def get_kmdf(self):
+        return self.kdata_frame
     
     def get_feature_columns(self):
         return self.feature_columns 
@@ -49,6 +59,9 @@ class Df_transformer:
     def get_cur_scaler(self):
         return self.cur_scaler
     
+    def get_cur_mscaler(self):
+        return self.cur_mscaler
+    
     def get_df(self):
         return self.dataframe
     
@@ -63,3 +76,11 @@ class Df_transformer:
             self.varianza_acumulada= sum(self.varianza[0:value])
             return self.varianza_acumulada
         return None
+    
+    def get_info_as_df(self):
+        index_ = self.dataframe.columns
+        info = self.dataframe.dtypes.to_frame('dtypes').astype(str)
+        info['column_name'] = index_
+        info['non_null'] = self.dataframe.count().astype(str)
+        info['unique_values'] = self.dataframe.apply(lambda srs: len(srs.unique())).astype(str)
+        return info[['column_name', 'dtypes', 'non_null', 'unique_values']]

@@ -10,13 +10,11 @@ import numpy as np
 import dash
 from sklearn.preprocessing import StandardScaler, MinMaxScaler 
 from sklearn.model_selection import train_test_split
-#from sklearn.cluster import KMeans
-#from sklearn.metrics import pairwise_distances_argmin_min
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.cluster import KMeans
+from sklearn.metrics import pairwise_distances_argmin_min
 
-from sklearn.tree import export_text
 from .data_frame_transformer import Df_transformer
+import plotly.express as px
 
 df_transformer = Df_transformer()
 
@@ -72,7 +70,7 @@ def render(app: Dash) -> html.Div:
     )
  )
 
-def kMeans(contents, filename, date):
+def kMeansFile(contents, filename, date):
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
     try:
@@ -89,16 +87,17 @@ def kMeans(contents, filename, date):
         return html.Div([
             dbc.Alert('Hubo un error al cargar el archivo.', color="danger")
         ])
-
     return html.Div([
         dbc.Alert('El archivo cargado es: {}'.format(filename), color="success"),
         # Se muestran las primeras 8 filas del dataframe
         html.Div(
             create_data_table(df_transformer.get_df()),
         ),
-        html.H5("Descripción de los tipos de datos:"),
-        
-        
+         html.H5("Descripción general de los datos"),
+         html.Div(
+            create_data_table(df_transformer.get_info_as_df()),
+        ),
+        html.H5("Matriz de correlaciones:"),
         dcc.Graph(
             id='matriz',
             figure={
@@ -143,7 +142,7 @@ def kMeans(contents, filename, date):
         html.Div(
 
             children=[
-                    dbc.Badge("ℹMétodo de  Estandarización", color="primary",
+                    dbc.Badge("Método de  Estandarización", color="primary",
                     id="tooltip-method", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"},
                     ),
                     dbc.Tooltip(
@@ -184,7 +183,7 @@ def kMeans(contents, filename, date):
             
             html.Button(
                 "Generar Modelo", 
-                id="generate-button", 
+                id="generate-km-button", 
                 n_clicks=0,
                 className="btn btn-success",
                 style={
@@ -220,7 +219,7 @@ def kMeans(contents, filename, date):
 def update_output(list_of_contents, list_of_names,list_of_dates):
     if list_of_contents is not None:
         children = [
-            kMeans(c,n,d) for c,n,d in
+            kMeansFile(c,n,d) for c,n,d in
             zip(list_of_contents, list_of_names,list_of_dates)]
         return children
 
@@ -241,45 +240,43 @@ def update_column_options(target_column):
 
 @callback(
     Output("prediction-output-kMean", "children"),
-    Input("generate-button", "n_clicks"),
+    Input("generate-km-button", "n_clicks"),
     State("n_clusters", "value"),
     State("n_init", "value"),
     State("feature-columns-dropdown-kMean","value"),
 )
-def generate_model(n_clicks,n_clusters,n_init,feature_columns):
-    if(any(feature_columns) and n_clicks>0):
-        data = df_transformer.get_estandarizado()
+def generate_model(n_clicks,clusters,init,feature_columns):
+    if(feature_columns != None and n_clicks>0):
+        if clusters == None:
+            return  html.Div([
+                dbc.Alert('Debes ingresar un número clusters', color="danger")
+            ])
         
+        MEstandarizada = df_transformer.get_cur_mscaler()
         
-            
         # Initialize the Decision Tree Classifier
-        km= kMeans( n_clusters=n_clusters,n_init=n_init,random_state=0)
-        km.fit(data)
-        
+        km= KMeans( n_clusters=clusters,random_state=0, n_init=10).fit(MEstandarizada)
+        km.predict(MEstandarizada)
+        km_result_df = df_transformer.get_df()[feature_columns]
+        km_result_df['clusterP'] = km.labels_
+        df_transformer.set_kmdf(km_result_df)
+        cluster_count = km_result_df.groupby(['clusterP'])['clusterP'].count().to_frame()
+        cluster_count.insert(loc=0, column='cluster', value=[i for i in range(clusters)])
+        centroides = km_result_df.groupby('clusterP').mean()
+        centroides.insert(loc=0, column='cluster', value=[i for i in range(clusters)])
         return html.Div([
-            #dbc.Alert(f"Error Cuadrático Medio: {round(mse,4)}"),
-            #dbc.Alert(f"Error Absoluto Medio: {round(mae,4)}"),
-            #dbc.Alert(f"R^2 Score: {round(r2,4)}"),
-            #html.Div([html.Pre(reporte)],
-             #        style={'height': '20em', 'overflowY': 'scroll', 'border': '1px solid', 'padding': '10px'},
-              #       ),
-            html.H3("Realizar predicción"),
-            html.Div(id="feature-inputs-div-kMean",
-                    style={
-                    'marginLeft': 'auto',
-                    'marginRight': 'auto',
-                }),
-            html.Button(
-                "Predecir", 
-                id="predict-button", 
-                n_clicks=0,
-                className="btn btn-success",
-                style={
-                    'marginTop' : '10px',
-                    'marginLeft': '75%',
-                }
-            ),
-            html.Div(id="manual_prediction-output-kMean")
+            html.H5("Resultado de la clasificación"),
+            html.Div(
+                create_data_table(km_result_df)
+                ),
+            html.H5("Cantidad de elementos en los clusters"),
+            html.Div(
+                create_data_table(cluster_count)
+                ),
+            html.H5("Obtención de los centroides"),
+            html.Div(
+                create_data_table(centroides)
+                ),
             ],
             style={
                 'marginLeft': 'auto',
@@ -294,10 +291,9 @@ def generate_model(n_clicks,n_clusters,n_init,feature_columns):
 
 @callback(
     Output("feature-inputs-div-kMean", "children"),
-    Input("feature-columns-dropdown-kMean", "value"),
-    Input("target-column-dropdown-kMean", "value")
+    Input("feature-columns-dropdown-kMean", "value")
 )
-def create_inputs(inputs, target):
+def create_inputs(inputs):
     input_elements = []
     for index, inp in enumerate(inputs):
         input_elements.append(
@@ -314,7 +310,7 @@ def create_data_table(estandarizado)->html.Table:
     return html.Table(
             dash_table.DataTable(
                 data=estandarizado.to_dict('records'),
-                page_size=8,
+                page_size=10,
                 sort_action='native',
                 sort_mode='multi',
                 column_selectable='single',
@@ -325,7 +321,7 @@ def create_data_table(estandarizado)->html.Table:
                 columns=[{'name': i, 'id': i, "deletable":False} for i in estandarizado.columns],
                 style_table={
                     'padding': 10,
-                    'height': '300px', 
+                    #'height': '300px', 
                     'overflowX': 'auto',
                     'minWidth': '100%'
                     },
@@ -370,44 +366,42 @@ def create_table(datatypes) -> html.Table:
         )
 
 @callback(
-    Output("manual_prediction-output-kMean", "children"),
-    Input("predict-button", "n_clicks"),
-    State("feature-columns-dropdown-kMean", "value"),
-    State({"type": "feature-input-value", "index":ALL}, "value")
-)
-def make_prediction(n_clicks, feature_columns, feature_values ):
-    if n_clicks > 0:
-        # Read the data from a CSV file (assuming it's named "data.csv")
-        regresor = df_transformer.get_preditor()
-        # Create a DataFrame with the input values
-        input_data = {}
-        for i, col in enumerate(feature_columns):
-            input_value = float(feature_values[i])
-            input_data[col] = [input_value]
-        input_data = pd.DataFrame(input_data)
-        
-        # Perform prediction on the input values
-        prediction = regresor.predict(input_data.values)
-        
-        return dbc.Alert(f"Clasificacion: {prediction[0]}")
-    
-    return ""
-
-@callback(
     Output(component_id='estandar-kMeans', component_property='children'),
     Input(component_id='select-escale', component_property='value'),
     Input(component_id="feature-columns-dropdown-kMean", component_property="value")
 )
 def update_estandar(value,featureColumns):
-    df = df_transformer.get_df()
+    if featureColumns == None:
+        return ''
+    df = df_transformer.get_df()[featureColumns]
     if value == "MinMaxScaler":
         estandarizado=MinMaxScaler().fit_transform(df)
     else:
         estandarizado=StandardScaler().fit_transform(df)
+    
     df_estandarizado = pd.DataFrame(np.around(estandarizado,5),columns=df.columns)
     df_transformer.set_cur_scaler(df_estandarizado)
+    df_transformer.set_cur_mscaler(estandarizado)
+    sse = []
+    for i in range(2, 10):
+        km = KMeans(n_clusters=i, random_state=0, n_init=10)
+        km.fit(estandarizado)
+        sse.append(km.inertia_)
+    
+    df_for_plot = pd.DataFrame(sse, columns=['SSE'], index=[i for i in range(2,10)])
     if featureColumns != None:
-        return html.Div(
-            create_data_table(df_estandarizado[featureColumns])
-        )
+        return html.Div([
+            html.H5("Matriz Estandarizada"),
+            html.Div(
+                create_data_table(df_estandarizado[featureColumns]),
+            ),
+            dcc.Graph(
+                id='elbow-plot',
+                figure=px.line(df_for_plot, 
+                            #    x='Cantidad de clusters k', 
+                            #    y='SSE',
+                               title='Elbow Method',
+                               markers=True)
+            )
+        ])
     return ""
