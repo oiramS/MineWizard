@@ -1,6 +1,6 @@
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler 
-
+import numpy as np 
 class Df_transformer:
     def __init__(self, dataframe=None):
       self.dataframe = dataframe
@@ -25,6 +25,18 @@ class Df_transformer:
     def set_predictor(self, predictor):
         self.predictor = predictor
     
+    def set_estimators(self, estimators):
+        self.estimators = estimators
+    
+    def set_feature_columns(self, feature_columns):
+        self.feature_columns = feature_columns
+    
+    def get_feature_columns(self):
+        return self.feature_columns 
+    
+    def get_estimators(self):
+        return self.estimators
+    
     def get_preditor(self):
         return self.predictor
     
@@ -39,6 +51,9 @@ class Df_transformer:
     
     def get_df(self):
         return self.dataframe
+    
+    def get_df_numeric(self):
+        return self.dataframe.select_dtypes(include=np.number)
     
     def get_varianza(self):
         return self.varianza

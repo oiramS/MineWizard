@@ -205,7 +205,7 @@ def update_column_options(target_column, feature_columns):
 def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,target_column, feature_columns):
     if(target_column != None and  any(feature_columns) and n_clicks>0):
         data = df_transformer.get_df()
-        print(feature_columns)
+        df_transformer.set_feature_columns(feature_columns)
         # Separate the features and the target variable
         X = np.array(data[feature_columns])
         Y = np.array(data[[target_column]])
@@ -233,27 +233,40 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
             
         # Initialize the Decision Tree Regressor
         regressor = RandomForestRegressor( min_samples_leaf=samples_leaf,min_samples_split=samples_split, n_estimators=estimators,random_state=0)
-        df_transformer.set_predictor(regressor)
         # Fit the model
         regressor.fit(X_train, Y_train)
         
         # Perform prediction
         Y_pred = regressor.predict(X_test)
         
+        df_transformer.set_predictor(regressor)
+        
         # Calculate evaluation metrics
         mse = mean_squared_error(Y_test, Y_pred)
         mae = mean_absolute_error(Y_test, Y_pred)
         r2 = r2_score(Y_test, Y_pred)
-        Estimador = regressor.estimators_[0]
-        reporte = export_text(Estimador, feature_names=feature_columns)
-        
+        df_transformer.set_estimators( regressor.estimators_)
         return html.Div([
             dbc.Alert(f"Error Cuadrático Medio: {round(mse,4)}"),
             dbc.Alert(f"Error Absoluto Medio: {round(mae,4)}"),
             dbc.Alert(f"R^2 Score: {round(r2,4)}"),
-            html.Div([html.Pre(reporte)],
-                     style={'height': '20em', 'overflowY': 'scroll', 'border': '1px solid', 'padding': '10px'},
-                     ),
+            html.Div([
+            html.Label("Selecciona el árbol predictor para ver su reporte:"),
+               dcc.Dropdown(
+                options=[{'label': f'estimador {i}', 'value': i} for i in range(estimators)],
+                id='select-estimator',
+                value=0
+            ), 
+            ]),
+            html.Div(
+                    style={'height': '20em', 
+                           'overflowY': 'scroll', 
+                           'border': '1px solid', 
+                           'padding': '10px',
+                           'marginTop' : '10px',
+                           },
+                    id='render-report',
+                    ),
             html.H3("Realizar predicción"),
             html.Div(id="feature-inputs-div-PF",
                     style={
@@ -383,3 +396,13 @@ def make_prediction(n_clicks, feature_columns, feature_values ):
         return dbc.Alert(f"Predicción: {round(prediction[0], 4)}")
     
     return ""
+
+@callback(
+    Output("render-report", "children"),
+    Input("select-estimator", "value"),
+)
+def show_report(value):
+    Estimador = df_transformer.get_estimators()
+    reporte = export_text(Estimador[value], feature_names=df_transformer.get_feature_columns())
+    
+    return html.Pre(reporte)
