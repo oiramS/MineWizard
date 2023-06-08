@@ -29,7 +29,7 @@ def render(app: Dash) -> html.Div:
             html.Div(
             id="contenido",
             children=[
-                html.P("El Árbol de clasificación, cuando la variable dependiente es de tipo cualitativa. Se trata de dar con un esquema de múltiples bifuraciones, anidadas en dorma de árbol, para obtener una predicción para la clase de pertenencia de un elemento."),
+                html.P("El Árbol de clasificación, cuando la variable dependiente es de tipo cualitativa. Se trata de dar con un esquema de múltiples bifuraciones, anidadas en forma de árbol, para obtener una predicción para la clase de pertenencia de un elemento."),
             
                 ],         
             ),
