@@ -98,12 +98,31 @@ def Prontree(contents, filename, date):
         
         dcc.Graph(
             id='matriz',
-            figure=px.imshow(
-                np.triu(df_transformer.get_df_numeric().corr()), 
-                x=df_transformer.get_df_numeric().columns,
-                y=df_transformer.get_df_numeric().columns,
-                text_auto=True, 
-                aspect="auto"),
+            figure={
+                'data': [
+                    {'x': df.corr(numeric_only=True).columns, 'y': df.corr().columns, 'z': np.triu(df.corr().values, k=1), 'type': 'heatmap', 'colorscale': 'sepal_length', 'color_continuous_scale':'scale' , 'symmetric': False}
+                ],
+                'layout': {
+                    'title': 'Matriz de correlación',
+                    'xaxis': {'side': 'down'},
+                    'yaxis': {'side': 'left'},
+                    # 'plot_bgcolor':'rgba(0,0,0,0)', 
+                    # 'paper_bgcolor':'rgba(0,0,0,0)',
+                    # 'font' : {'color' : '#7FDBFF'},
+                    # Agregamos el valor de correlación por en cada celda (text_auto = True)
+                    'annotations': [
+                        dict(
+                            x=df.corr().columns[i],
+                            y=df.corr().columns[j],
+                            text=str(round(df.corr().values[i][j], 4)),
+                            showarrow=False,
+                            font=dict(
+                                color='white' if abs(df.corr().values[i][j]) >= 0.67  else 'black'
+                            ),
+                        ) for i in range(len(df.corr().columns)) for j in range(i)
+                    ],
+                },
+            },
         ),
         html.H3("Selección de variables"),
         dbc.Row([
