@@ -28,7 +28,7 @@ def render(app: Dash) -> html.Div:
     return html.Div(
         children=html.Div([
             html.H1('Bosque de clasificación'),
-            #Explicación de Árboles de pronóstico
+            #Explicación de Árboles de Clasificación
             html.Div(
             id="contenido",
             children=[
@@ -41,7 +41,7 @@ def render(app: Dash) -> html.Div:
                 className="four columns",
                 children=html.Div(
                     [
-                        html.H4("Carga de dataset para iniciar el Bosque de pronóstico", className="text-upload"),
+                        html.H4("Carga de dataset para iniciar el Bosque de clasificación", className="text-upload"),
                         # Muestra el módulo de carga
                         dcc.Upload(
                             id="upload-data",
@@ -323,7 +323,7 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
                     'marginRight': 'auto',
                 }),
             html.Button(
-                "Predecir", 
+                "Clasificar", 
                 id="predict-button", 
                 n_clicks=0,
                 className="btn btn-success",

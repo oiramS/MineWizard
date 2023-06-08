@@ -300,7 +300,7 @@ def generate_model(n_clicks,max_depth,min_samples_split,min_samples_leaf,target_
                     'marginRight': 'auto',
                 }),
             html.Button(
-                "Predecir", 
+                "Clasificar", 
                 id="predict-button", 
                 n_clicks=0,
                 className="btn btn-success",
