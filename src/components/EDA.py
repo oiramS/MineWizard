@@ -217,7 +217,7 @@ def EDA(contents, filename):
             id='matriz',
             figure={
                 'data': [
-                    {'x': df.corr(numeric_only=True).columns, 'y': df.corr().columns, 'z': np.triu(df.corr().values, k=1), 'type': 'heatmap', 'colorscale': 'sepal_length', 'color_continuous_scale':'scale' , 'symmetric': False}
+                    {'x': df.corr(numeric_only=True).columns, 'y': df.corr(numeric_only=True).columns, 'z': np.triu(df.corr(numeric_only=True).values, k=1), 'type': 'heatmap', 'colorscale': 'sepal_length', 'color_continuous_scale':'scale' , 'symmetric': False}
                 ],
                 'layout': {
                     'title': 'Matriz de correlación',
@@ -229,14 +229,14 @@ def EDA(contents, filename):
                     # Agregamos el valor de correlación por en cada celda (text_auto = True)
                     'annotations': [
                         dict(
-                            x=df.corr().columns[i],
-                            y=df.corr().columns[j],
-                            text=str(round(df.corr().values[i][j], 4)),
+                            x=df.corr(numeric_only=True).columns[i],
+                            y=df.corr(numeric_only=True).columns[j],
+                            text=str(round(df.corr(numeric_only=True).values[i][j], 4)),
                             showarrow=False,
-                            font=dict(
-                                color='white' if abs(df.corr().values[i][j]) >= 0.67  else 'black'
-                            ),
-                        ) for i in range(len(df.corr().columns)) for j in range(i)
+                            # font=dict(
+                            #     color='white' if abs(df.corr().values[i][j]) >= 0.67  else 'black'
+                            # ),
+                        ) for i in range(len(df.corr(numeric_only=True).columns)) for j in range(i)
                     ],
                 },
             },

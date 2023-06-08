@@ -10,8 +10,9 @@ import numpy as np
 import dash
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
 import plotly.express as px
 from sklearn.tree import export_text
 from .data_frame_transformer import Df_transformer
@@ -272,20 +273,27 @@ def generate_model(n_clicks,max_depth,min_samples_split,min_samples_leaf,target_
         Y_pred = classifier.predict(X_test)
         
         # Calculate evaluation metrics
-        mse = mean_squared_error(Y_test, Y_pred)
-        mae = mean_absolute_error(Y_test, Y_pred)
-        r2 = r2_score(Y_test, Y_pred)
+        # mse = mean_squared_error(Y_test, Y_pred)
+        # mae = mean_absolute_error(Y_test, Y_pred)
+        # r2 = r2_score(Y_test, Y_pred)
         
         reporte = export_text(classifier, feature_names=feature_columns)
         
+        ImportanciaMod1 = pd.DataFrame({'Variable': list(data[feature_columns]),
+                                'Importancia': classifier.feature_importances_}).sort_values('Importancia', ascending=False)
+        
         return html.Div([
-            dbc.Alert(f"Error Cuadrático Medio: {round(mse,4)}"),
-            dbc.Alert(f"Error Absoluto Medio: {round(mae,4)}"),
-            dbc.Alert(f"R^2 Score: {round(r2,4)}"),
+            dbc.Alert(f"Criterio: {classifier.criterion}"),
+            dbc.Alert(f"Importancia de variables: {classifier.feature_importances_}"),
+            dbc.Alert(f"Exactitud: {accuracy_score(Y_test,Y_pred)}"),
+            html.H6("Reporte de Clasificación"),
+            html.Pre(classification_report(Y_test, Y_pred)),
             html.Div([html.Pre(reporte)],
                      style={'height': '20em', 'overflowY': 'scroll', 'border': '1px solid', 'padding': '10px'},
                      ),
-            html.H3("Realizar predicción"),
+            html.H5("Eficiencia y conformación del modelo"),
+            html.Div(create_data_table(ImportanciaMod1)),
+            html.H3("Realizar clasificación"),
             html.Div(id="feature-inputs-div-cTree",
                     style={
                     'marginLeft': 'auto',
@@ -344,7 +352,7 @@ def create_data_table(estandarizado)->html.Table:
                 cell_selectable=False,
                 editable=False,
                 row_selectable='multi',
-                columns=[{'name': i, 'id': i, "deletable":False} for i in df_transformer.get_df().columns],
+                columns=[{'name': i, 'id': i, "deletable":False} for i in estandarizado.columns],
                 style_table={
                     'padding': 10,
                     'height': '300px', 

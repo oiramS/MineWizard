@@ -9,8 +9,12 @@ import base64
 import numpy as np
 import dash
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.ensemble import RandomForestClassifier
+
+
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
 
 import plotly.express as px
 from sklearn.tree import export_text
@@ -23,12 +27,12 @@ def render(app: Dash) -> html.Div:
     '''
     return html.Div(
         children=html.Div([
-            html.H1('Bosque de pronóstico'),
+            html.H1('Bosque de clasificación'),
             #Explicación de Árboles de pronóstico
             html.Div(
             id="contenido",
             children=[
-                html.P("Un bosque aleatorio es un grupo de árboles de decisión.elegirá características al azar y hará observaciones, construirá un bosque de árboles de decisión y luego promediará los resultados.  Es uno de los algoritmos más utilizados debido a su precisión, simplicidad y flexibilidad."),
+                html.P("Un bosque aleatorio es un grupo de árboles de decisión. Elegirá características al azar y hará observaciones, construirá un bosque de árboles de decisión y luego promediará los resultados.  Es uno de los algoritmos más utilizados debido a su precisión, simplicidad y flexibilidad."),
             
                 ],         
             ),
@@ -97,12 +101,31 @@ def ClassForest(contents, filename, date):
         
         dcc.Graph(
             id='matriz',
-            figure=px.imshow(
-                np.triu(df_transformer.get_df_numeric().corr()), 
-                x=df_transformer.get_df_numeric().columns,
-                y=df_transformer.get_df_numeric().columns,
-                text_auto=True, 
-                aspect="auto"),
+            figure={
+                'data': [
+                    {'x': df.corr(numeric_only=True).columns, 'y': df.corr(numeric_only=True).columns, 'z': np.triu(df.corr(numeric_only=True).values, k=1), 'type': 'heatmap', 'colorscale': 'sepal_length', 'color_continuous_scale':'scale' , 'symmetric': False}
+                ],
+                'layout': {
+                    'title': 'Matriz de correlación',
+                    'xaxis': {'side': 'down'},
+                    'yaxis': {'side': 'left'},
+                    # 'plot_bgcolor':'rgba(0,0,0,0)', 
+                    # 'paper_bgcolor':'rgba(0,0,0,0)',
+                    # 'font' : {'color' : '#7FDBFF'},
+                    # Agregamos el valor de correlación por en cada celda (text_auto = True)
+                    'annotations': [
+                        dict(
+                            x=df.corr(numeric_only=True).columns[i],
+                            y=df.corr(numeric_only=True).columns[j],
+                            text=str(round(df.corr(numeric_only=True).values[i][j], 4)),
+                            showarrow=False,
+                            # font=dict(
+                            #     color='white' if abs(df.corr().values[i][j]) >= 0.67  else 'black'
+                            # ),
+                        ) for i in range(len(df.corr(numeric_only=True).columns)) for j in range(i)
+                    ],
+                },
+            },
         ),
         html.H3("Selección de variables"),
         dbc.Row([
@@ -246,7 +269,7 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
         estimators=n_estimators if n_estimators!=None else 100
             
         # Initialize the Decision Tree Regressor
-        regressor = RandomForestRegressor( min_samples_leaf=samples_leaf,min_samples_split=samples_split, n_estimators=estimators,random_state=0)
+        regressor = RandomForestClassifier( min_samples_leaf=samples_leaf,min_samples_split=samples_split, n_estimators=estimators,random_state=0)
         # Fit the model
         regressor.fit(X_train, Y_train)
         
@@ -256,14 +279,26 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
         df_transformer.set_predictor(regressor)
         
         # Calculate evaluation metrics
-        mse = mean_squared_error(Y_test, Y_pred)
-        mae = mean_absolute_error(Y_test, Y_pred)
-        r2 = r2_score(Y_test, Y_pred)
+        # mse = mean_squared_error(Y_test, Y_pred)
+        # mae = mean_absolute_error(Y_test, Y_pred)
+        # r2 = r2_score(Y_test, Y_pred)
+        
+        #reporte = export_text(regressor, feature_names=feature_columns)
+        
+        ImportanciaMod1 = pd.DataFrame({'Variable': list(data[feature_columns]),
+                                'Importancia': regressor.feature_importances_}).sort_values('Importancia', ascending=False)
+        
+        
         df_transformer.set_estimators( regressor.estimators_)
+        print(Y_pred)
         return html.Div([
-            dbc.Alert(f"Error Cuadrático Medio: {round(mse,4)}"),
-            dbc.Alert(f"Error Absoluto Medio: {round(mae,4)}"),
-            dbc.Alert(f"R^2 Score: {round(r2,4)}"),
+            dbc.Alert(f"Criterio: {regressor.criterion}"),
+            dbc.Alert(f"Importancia de variables: {regressor.feature_importances_}"),
+            dbc.Alert(f"Exactitud: {accuracy_score(Y_test,Y_pred)}"),
+            html.H6("Reporte de Clasificación"),
+            html.Pre(classification_report(Y_test, Y_pred)),
+            html.H5("Eficiencia y conformación del modelo"),
+           html.Div(create_data_table(ImportanciaMod1)),
             html.Div([
             html.Label("Selecciona el árbol predictor para ver su reporte:"),
                dcc.Dropdown(
@@ -281,7 +316,7 @@ def generate_model(n_clicks,n_estimators,min_samples_split,min_samples_leaf,targ
                            },
                     id='render-report-cForest',
                     ),
-            html.H3("Realizar predicción"),
+            html.H3("Realizar clasificación"),
             html.Div(id="feature-inputs-div-cForest",
                     style={
                     'marginLeft': 'auto',
@@ -339,7 +374,7 @@ def create_data_table(estandarizado)->html.Table:
                 cell_selectable=False,
                 editable=False,
                 row_selectable='multi',
-                columns=[{'name': i, 'id': i, "deletable":False} for i in df_transformer.get_df().columns],
+                columns=[{'name': i, 'id': i, "deletable":False} for i in estandarizado.columns],
                 style_table={
                     'padding': 10,
                     'height': '300px', 
