@@ -12,6 +12,7 @@ from dash.dash_table.Format import Group
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler 
 import plotly.express as px
+import plotly.graph_objects as go
 
 from .data_frame_transformer import Df_transformer
 
@@ -108,7 +109,7 @@ def parse_contents(contents, filename, date):
             id='matriz',
             figure={
                 'data': [
-                    {'x': df.corr(numeric_only=True).columns, 'y': df.corr().columns, 'z': np.triu(df.corr().values, k=1), 'type': 'heatmap', 'colorscale': 'sepal_length', 'color_continuous_scale':'scale' , 'symmetric': False}
+                    {'x': df.corr(numeric_only=True).columns, 'y': df.corr(numeric_only=True).columns, 'z': np.triu(df.corr(numeric_only=True).values, k=1), 'type': 'heatmap', 'colorscale': 'sepal_length', 'color_continuous_scale':'scale' , 'symmetric': False}
                 ],
                 'layout': {
                     'title': 'Matriz de correlación',
@@ -120,14 +121,14 @@ def parse_contents(contents, filename, date):
                     # Agregamos el valor de correlación por en cada celda (text_auto = True)
                     'annotations': [
                         dict(
-                            x=df.corr().columns[i],
-                            y=df.corr().columns[j],
-                            text=str(round(df.corr().values[i][j], 4)),
+                            x=df.corr(numeric_only=True).columns[i],
+                            y=df.corr(numeric_only=True).columns[j],
+                            text=str(round(df.corr(numeric_only=True).values[i][j], 4)),
                             showarrow=False,
                             font=dict(
-                                color='white' if abs(df.corr().values[i][j]) >= 0.67  else 'black'
+                                color='white' #if abs(df.corr(numeric_only=True).values[i][j]) >= 0.67  else 'black'
                             ),
-                        ) for i in range(len(df.corr().columns)) for j in range(i)
+                        ) for i in range(len(df.corr(numeric_only=True).columns)) for j in range(i)
                     ],
                 },
             },
@@ -153,7 +154,7 @@ def parse_contents(contents, filename, date):
         html.Div(
 
             children=[
-                    dbc.Badge("ℹMétodo de  Estandarización", color="primary",
+                    dbc.Badge("Método de  Estandarización", color="primary",
                     id="tooltip-method", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"},
                     ),
                     dbc.Tooltip(
@@ -227,6 +228,7 @@ def update_output(list_of_contents, list_of_names,list_of_dates):
 )
 def update_estandar(value):
     df = df_transformer.get_df()
+    df = df[df.select_dtypes(include=np.number).columns.tolist()]
     if value == "MinMaxScaler":
         estandarizado=MinMaxScaler().fit_transform(df)
     else:
@@ -249,7 +251,7 @@ def create_data_table(estandarizado)->html.Table:
                 cell_selectable=False,
                 editable=False,
                 row_selectable='multi',
-                columns=[{'name': i, 'id': i, "deletable":False} for i in df_transformer.get_df().columns],
+                columns=[{'name': i, 'id': i, "deletable":False} for i in estandarizado.columns],
                 style_table={
                     'padding': 10,
                     'height': '300px', 
@@ -291,7 +293,7 @@ def create_table(datatypes) -> html.Table:
             style={
                 'marginLeft': 'auto',
                 'marginRight': 'auto',
-                'width': 500
+                'width': '90%'
                 
                 }
         )
@@ -302,33 +304,128 @@ def create_table(datatypes) -> html.Table:
     Input(component_id='select-escale', component_property='value'))
 def update_components(value, state):
     if value != None:
+        df = df_transformer.get_df()
+        df.select_dtypes(include=np.number).columns.tolist()
         pca=PCA(n_components=value)
         pca.fit(df_transformer.get_cur_scaler())
-        components=pd.DataFrame(abs(np.around(pca.components_, 5)),columns=df_transformer.get_df().columns)
+        components=pd.DataFrame(abs(np.around(pca.components_, 5)),columns=df.select_dtypes(include=np.number).columns)
         varianza=pca.explained_variance_ratio_
         df_transformer.set_varianza(varianza)
-        return create_data_table(components)
-        
-
-@callback(
-    Output(component_id='variance', component_property='children'),
-    Input(component_id='n_components', component_property='value'),
-    Input(component_id='select-escale', component_property='value'))
-def update_variance(value, state):
-    if value != None:
-        varianza=df_transformer.get_varianza()
-        return html.Div(
-            [
+        #print(pca.explained_variance_ratio_)
+        sum_cum = np.cumsum(pca.explained_variance_ratio_)
+        #sum_cum.insert(0,0)
+        fig = go.Figure(data=go.Scatter(x=[i+1 for i in range(len(sum_cum))], y = sum_cum))
+        fig.update_layout(title='Gráfica de la Varianza Acumulada',
+                   xaxis_title='Número de Componentes',
+                   yaxis_title='Varianza Acumulada')
+        return html.Div([
+            html.Div(create_data_table(components)),
             dbc.Alert(
                 f"Proporción de varianza: {varianza}"
             ),
             dbc.Alert(
-                f"Varianza acumulada para: {value} componentes: {df_transformer.get_varianza_acum(value)}"
-            )
+                f"Varianza acumulada para: {value} componentes: {round(df_transformer.get_varianza_acum(value),3)}"
+            ),
+            dcc.Graph(
+                figure = fig
+            ),
+            html.H5("Seleccione los componentes a eliminar"),
+            dcc.Dropdown(
+                id='select_principal_components',
+                options=[{'label': value, 'value': value} for value in df_transformer.get_df().select_dtypes(include=np.number).columns.tolist()],
+                value=None,
+                multi=True   
+            ),
+            html.Div(id="pca_df"),
+            
             ])
     return html.Div(
-            [
-            dbc.Alert(
-                "Esperando número de componentes principales..."
+        [
+        dbc.Alert(
+            "Esperando número de componentes principales..."
+        )
+        ],
+    style={
+        'marginLeft': 'auto',
+        'marginRight': 'auto',
+        'width': '80%',
+        'padding':10,
+    })
+        
+@callback(
+    Output(component_id='pca_df', component_property='children'),
+    Input(component_id="select_principal_components", component_property="value")
+)
+def update_estandar(featureColumns):
+    if featureColumns == None or not any(featureColumns):
+        df_pca = df_transformer.get_df()
+    else:
+        df_pca = df_transformer.get_df().drop(columns=featureColumns)
+    return html.Div([
+        html.Div(create_data_table(df_pca)),
+        html.H5("Análisis Correlacional de Datos"),
+        dbc.Row([
+            html.H6("Columna en el eje X"),
+            dcc.Dropdown(
+                id='x_value',
+                options=[{'label': value, 'value': value} for value in df_pca.select_dtypes(include=np.number).columns.tolist()],
+                value=None,
+                multi=False   
+            ),
+            ],
+            style={
+                'marginTop' : '10px', 
+            }),  
+            dbc.Row([
+            html.H6("Columna en el eje Y"), 
+            dcc.Dropdown(
+                id='y_value',
+                options=[{'label': value, 'value': value} for value in df_pca.select_dtypes(include=np.number).columns.tolist()],
+                value=None,
+                multi=False   
+            ),
+           ],
+            style={
+                'marginTop' : '10px', 
+            }),   
+            dbc.Row([
+            html.H6("Columna de agrupación"),
+            dcc.Dropdown(
+                id='hue_value',
+                options=[{'label': value, 'value': value} for value in df_pca.columns.tolist()],
+                value=None,
+                multi=False   
+            ),
+            ],
+            style={
+                'marginTop' : '10px', 
+            }),
+            html.Div(id='acd_scatter')
+    ],
+    style={
+        'marginLeft': 'auto',
+        'marginRight': 'auto',
+        'width': '80%',
+        'padding':10,
+    }     
+    )
+    
+@callback(
+Output(component_id='acd_scatter', component_property='children'),
+Input(component_id="x_value", component_property="value"),
+Input(component_id="y_value", component_property="value"),
+Input(component_id="hue_value", component_property="value")
+)
+def build_scatter_plot(x, y, hue):
+    if x == None or y == None or hue == None:
+        return dbc.Alert("Complete el formulario", color="success"),
+    df = df_transformer.get_df()
+    return dcc.Graph(
+                id='elbow-plot',
+                figure=px.scatter(df, 
+                               x=x, 
+                               y=y,
+                               color= hue,
+                               title='Gráfico de dispersión',
+                            )
             )
-            ])

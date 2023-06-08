@@ -72,10 +72,8 @@ class Df_transformer:
         return self.varianza
     
     def get_varianza_acum(self, value):
-        if any(self.varianza != None):
-            self.varianza_acumulada= sum(self.varianza[0:value])
-            return self.varianza_acumulada
-        return None
+        self.varianza_acumulada= sum(self.varianza[0:value])
+        return self.varianza_acumulada
     
     def get_info_as_df(self):
         index_ = self.dataframe.columns
