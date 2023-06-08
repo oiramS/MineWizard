@@ -6,7 +6,10 @@ import plotly.graph_objects as go
 import io
 import base64
 import numpy as np
+from .data_frame_transformer import Df_transformer
+import plotly.express as px
 
+df_transformer = Df_transformer()
 
 def render(app: Dash) -> html.Div:
     '''
@@ -74,6 +77,7 @@ def EDA(contents, filename):
             return html.Div([
             dbc.Alert('Hubo un error al cargar el archivo.', color="danger")
         ])
+        df_transformer.set_dataframe(df)
     except Exception as e:
         print(e)
         return html.Div([
@@ -201,6 +205,42 @@ def EDA(contents, filename):
         html.Br(),
         html.Div([dropdown_boxplot, boxplot_graph]),
         dataframe_store,
+        html.H5("Distribución de Variables Numéricas"),
+        dcc.Dropdown(
+            id='select_numeric_var',
+            options=[{'label': value, 'value': value} for value in df.select_dtypes(include=np.number).columns.tolist()],
+            value=None
+            ),
+        html.Div(id="hist-plots"),
+        html.H5("Matriz de correlaciones"),
+        dcc.Graph(
+            id='matriz',
+            figure={
+                'data': [
+                    {'x': df.corr(numeric_only=True).columns, 'y': df.corr().columns, 'z': np.triu(df.corr().values, k=1), 'type': 'heatmap', 'colorscale': 'sepal_length', 'color_continuous_scale':'scale' , 'symmetric': False}
+                ],
+                'layout': {
+                    'title': 'Matriz de correlación',
+                    'xaxis': {'side': 'down'},
+                    'yaxis': {'side': 'left'},
+                    # 'plot_bgcolor':'rgba(0,0,0,0)', 
+                    # 'paper_bgcolor':'rgba(0,0,0,0)',
+                    # 'font' : {'color' : '#7FDBFF'},
+                    # Agregamos el valor de correlación por en cada celda (text_auto = True)
+                    'annotations': [
+                        dict(
+                            x=df.corr().columns[i],
+                            y=df.corr().columns[j],
+                            text=str(round(df.corr().values[i][j], 4)),
+                            showarrow=False,
+                            font=dict(
+                                color='white' if abs(df.corr().values[i][j]) >= 0.67  else 'black'
+                            ),
+                        ) for i in range(len(df.corr().columns)) for j in range(i)
+                    ],
+                },
+            },
+        ),
     ],
 )
 @callback(Output('output-data-upload-EDA', 'children'),
@@ -213,6 +253,19 @@ def update_output(list_of_contents, list_of_names):
             EDA(c,n) for c,n in
             zip(list_of_contents, list_of_names)]
         return children
+
+@callback(
+    Output("hist-plots", "children"),
+    Input("select_numeric_var", "value")
+)
+def create_hists(column_name):
+    if column_name == None:
+        return dbc.Alert('Selecciona una columna de la lista.', color="success"),
+    df_to_show = df_transformer.get_df()
+    return dcc.Graph(
+        id='hist_plot',
+        figure=px.histogram(df_to_show, x=column_name)
+    )
 
 
 def create_table(datatypes) -> html.Table:
@@ -271,29 +324,3 @@ def update_boxplot(selected_variable, stored_data):
     df = pd.DataFrame(stored_data)
     figure = create_boxplot_figure(selected_variable, df)
     return figure
-
-
-def create_categorical_bar_charts(df):
-    categorical_columns = df.select_dtypes(include='object').columns
-    bar_charts = []
-    for col in categorical_columns:
-        if df[col].nunique() < 10:
-            counts = df[col].value_counts()
-            bar_chart = go.Bar(x=counts.index, y=counts.values, name=col)
-            bar_charts.append(bar_chart)
-    # Crear un objeto go.Figure con las gráficas de barras y un diseño personalizado
-    figure = go.Figure(data=bar_charts, layout=go.Layout(title='Distribución de variables categóricas', xaxis=dict(title='Categoría'), yaxis=dict(title='Frecuencia'), hovermode='closest'))
-    return figure
-
-def create_categorical_tables(df):
-    data_frames = []
-
-    for col in df.select_dtypes(include='object'):
-        if df[col].nunique() < 10:
-            table_df = df.groupby(col).mean().reset_index()
-            col_values = table_df[col].copy()  # Copia los valores de la columna categórica
-            table_df = table_df.drop(columns=[col])  # Elimina la columna categórica
-            table_df.insert(0, col, col_values)  # Inserta la columna categórica al principio del DataFrame
-            data_frames.append(table_df)
-
-    return data_frames
